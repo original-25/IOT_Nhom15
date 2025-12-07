@@ -1,0 +1,64 @@
+# -------------------------------
+# Node.js (Backend)
+# -------------------------------
+
+# Bỏ qua thư mục node_modules của backend
+backend/node_modules/
+
+# Tệp log khi chạy npm
+backend/npm-debug.log
+backend/yarn-debug.log
+
+# Tệp môi trường cho backend (thường chứa các API key, DB credentials...)
+backend/.env
+
+# Thư mục build (nếu có)
+backend/build/
+backend/dist/
+
+# -------------------------------
+# Android (UI)
+# -------------------------------
+
+# Thư mục build của Android
+ui/.gradle/
+ui/build/
+
+# Thư mục tệp log Android
+ui/*.log
+
+# Các tệp nhạy cảm (như tệp cấu hình có mật khẩu, khóa API)
+ui/*.env
+
+# Các thư mục và tệp cấu hình của IDE (Android Studio, IntelliJ IDEA)
+ui/.idea/
+ui/.vscode/
+
+# Thư mục tạm thời của hệ điều hành macOS
+ui/.DS_Store
+
+# -------------------------------
+# ESP32 (Embedded C++ Code)
+# -------------------------------
+
+# Nếu có thư mục build trong ESP32
+esp32/build/
+esp32/.vs/
+
+# Các tệp tạm thời hoặc thư mục tạm (như tệp biên dịch)
+esp32/*.o
+esp32/*.elf
+esp32/*.bin
+esp32/*.out
+
+# -------------------------------
+# Các tệp chung cho toàn bộ dự án
+# -------------------------------
+
+# Tệp tạm thời do editor tạo (như Vim, Emacs)
+*.swp
+*~
+
+# Các tệp hệ thống (Windows, macOS)
+.DS_Store
+Thumbs.db
