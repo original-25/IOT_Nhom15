@@ -21,21 +21,31 @@ backend/dist/
 # -------------------------------
 
 # Thư mục build của Android
-ui/.gradle/
-ui/build/
+frontend/.gradle/
+frontend/build/
+frontend/app/build/ 
+frontend/*.log
+frontend/local.properties 
 
-# Thư mục tệp log Android
-ui/*.log
-
-# Các tệp nhạy cảm (như tệp cấu hình có mật khẩu, khóa API)
-ui/*.env
+# Các tệp nhạy cảm
+frontend/.env
 
 # Các thư mục và tệp cấu hình của IDE (Android Studio, IntelliJ IDEA)
-ui/.idea/
-ui/.vscode/
+frontend/.idea/
+frontend/.idea/workspace.xml 
+frontend/.idea/libraries 
+frontend/.idea/modules.xml 
+frontend/.vscode/
+frontend/*.iml 
+frontend/*.ipr 
+
+# Tệp liên quan đến Android Virtual Device (AVD) và Cấu hình giả lập
+frontend/*.avd
+frontend/*.ini
+frontend/captures/ 
 
 # Thư mục tạm thời của hệ điều hành macOS
-ui/.DS_Store
+frontend/.DS_Store
 
 # -------------------------------
 # ESP32 (Embedded C++ Code)
