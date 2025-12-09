@@ -32,7 +32,16 @@ android {
 }
 
 dependencies {
+    // Cần thiết cho việc quản lý trạng thái thiết bị
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.7.0")
 
+    // Retrofit (HTTP Client) - Dùng để kết nối với Backend JS
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Dùng để chuyển JSON sang Java Object
+
+    // Giao diện (Material Design)
+    implementation("com.google.android.material:material:1.11.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
