@@ -1,23 +1,22 @@
-// app.js
+const express = require("express");
+const cors = require("cors");
+const authRoutes = require("./routers/auth.routes");
 
-const express = require('express');
+const { swaggerDocs, swaggerUi } = require("./config/swagger");
+
+
 const app = express();
-const port = 3000;
 
-// Middleware (optional)
-app.use(express.json());  // Để Express có thể hiểu dữ liệu JSON
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Route gốc
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
 
-// Một route khác
-app.get('/api', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
+app.use("/api/auth", authRoutes);
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+
+app.get("/", (req, res) => res.send("IoT API running"));
+
+module.exports = app;

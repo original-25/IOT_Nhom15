@@ -11,7 +11,7 @@ const HomeSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      role: ["owner", "viewer", "editor"]
+      role: ["owner", "member"]
     }
   ]
 }, {
