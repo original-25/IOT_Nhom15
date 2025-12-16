@@ -1,8 +1,8 @@
 package com.example.smarthome.model.request;
 
-public class OtpRequest {
+public class SendOtpRequest {
     private String email;
-    public OtpRequest(String email) {
+    public SendOtpRequest(String email) {
         this.email = email;
     }
 }

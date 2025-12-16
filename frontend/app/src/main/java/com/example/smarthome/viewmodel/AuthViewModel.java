@@ -7,17 +7,23 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.annotation.NonNull;
 
 import com.example.smarthome.model.request.LoginRequest;
-import com.example.smarthome.model.request.OtpRequest;
 import com.example.smarthome.model.request.RegisterRequest;
+import com.example.smarthome.model.request.ResetPasswordRequest;
+import com.example.smarthome.model.request.SendOtpRequest;
+import com.example.smarthome.model.request.VerifyOtpRequest;
 import com.example.smarthome.model.response.AuthResponse;
 import com.example.smarthome.repository.AuthRepository;
 
 public class AuthViewModel extends AndroidViewModel {
     private AuthRepository repository;
-    // LiveData cho kết quả Đăng nhập và Đăng ký
+
     private MutableLiveData<AuthResponse> authResult = new MutableLiveData<>();
-    // LiveData cho trạng thái gửi OTP
-    private MutableLiveData<Boolean> otpSentStatus = new MutableLiveData<>();
+    private MutableLiveData<AuthResponse> otpSentResult = new MutableLiveData<>();
+    private MutableLiveData<AuthResponse> verifyOtpResult = new MutableLiveData<>();
+    private MutableLiveData<AuthResponse> forgotPasswordResult = new MutableLiveData<>();
+    private MutableLiveData<AuthResponse> verifyResetOtpResult = new MutableLiveData<>();
+
+    private MutableLiveData<AuthResponse> resetPasswordResult = new MutableLiveData<>();
 
     public AuthViewModel(@NonNull Application application) {
         super(application);
@@ -30,8 +36,25 @@ public class AuthViewModel extends AndroidViewModel {
         return authResult;
     }
 
-    public LiveData<Boolean> getOtpSentStatus() {
-        return otpSentStatus;
+    // ĐÃ SỬA GETTER: Trả về AuthResponse
+    public LiveData<AuthResponse> getOtpSentResult() {
+        return otpSentResult;
+    }
+
+    public LiveData<AuthResponse> getVerifyOtpResult() {
+        return verifyOtpResult;
+    }
+
+    public LiveData<AuthResponse> getForgotPasswordResult() {
+        return forgotPasswordResult;
+    }
+
+    public MutableLiveData<AuthResponse> getVerifyResetOtpResult() {
+        return verifyResetOtpResult;
+    }
+
+    public MutableLiveData<AuthResponse> getResetPasswordResult() {
+        return resetPasswordResult;
     }
 
     // --- Hàm Logic (View gọi) ---
@@ -40,16 +63,32 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     public void sendRegistrationOtp(String email) {
-        repository.sendRegistrationOtp(new OtpRequest(email), otpSentStatus);
+        // ĐÃ SỬA: Thay OtpSentStatus bằng OtpSentResult
+        repository.sendRegistrationOtp(new SendOtpRequest(email), otpSentResult);
     }
 
-    public void register(String email, String name, String password, String otp) {
-        repository.register(new RegisterRequest(email, name, password, otp), authResult);
+    public void verifyOtp(String email, String otp) {
+        VerifyOtpRequest request = new VerifyOtpRequest(email, otp);
+        repository.verifyOtp(request, verifyOtpResult);
     }
 
-    // ... Thêm hàm resetPassword ...
+    public void register(String email, String name, String password, String verifyToken) {
+        RegisterRequest request = new RegisterRequest(verifyToken, email, name, password);
+        repository.register(request, authResult);
+    }
 
-    public boolean isUserLoggedIn() {
-        return repository.isLoggedIn();
+    public void forgotPassword(String email) {
+        SendOtpRequest request = new SendOtpRequest(email);
+        repository.forgotPassword(request, forgotPasswordResult);
+    }
+
+    public void verifyResetOtp(String email, String otp) {
+        VerifyOtpRequest request = new VerifyOtpRequest(email, otp);
+        repository.verifyResetOtp(request, verifyResetOtpResult);
+    }
+
+    public void resetPassword(String email, String resetToken, String newPassword) {
+        ResetPasswordRequest request = new ResetPasswordRequest(email, resetToken, newPassword);
+        repository.resetPassword(request, resetPasswordResult);
     }
 }

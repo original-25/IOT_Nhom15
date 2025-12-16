@@ -56,7 +56,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/layout_register_step2"
+            android:id="@+id/layout_register_step2_otp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -65,7 +65,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="OTP đã được gửi. Vui lòng hoàn tất thông tin."
+                android:text="Mã OTP đã được gửi. Vui lòng nhập mã để xác thực Email."
                 android:layout_marginBottom="16dp"/>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -80,6 +80,27 @@
                     android:hint="Mã OTP"
                     android:inputType="number"/>
             </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/button_verify_otp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="XÁC THỰC OTP"
+                android:layout_marginTop="24dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_register_step3_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xác thực thành công. Vui lòng hoàn tất đăng ký."
+                android:layout_marginBottom="16dp"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
