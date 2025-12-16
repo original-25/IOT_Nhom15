@@ -4,8 +4,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    // THAY THẾ bằng địa chỉ IP cục bộ và cổng của Backend Node.js
-    private static final String BASE_URL = "http://<IP_CUA_MAY_SERVER_BACKEND>:3000/api/";
+    private static final String BASE_URL = "http://10.0.2.2:4000/";
 
     private static Retrofit retrofit;
 
