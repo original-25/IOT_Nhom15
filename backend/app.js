@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routers/auth.routes");
+const homeRoutes = require("./routers/home.routes");
 
 const { swaggerDocs, swaggerUi } = require("./config/swagger");
 
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/home", homeRoutes);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

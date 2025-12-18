@@ -8,14 +8,17 @@ const DeviceSchema = new mongoose.Schema({
     unique: true
   },
 
-  name: {
-    type: String,
-    required: true
-  },
+  name: String,
 
   type: {
     type: String,
     enum: ["relay", "sensor", "light", "fan", "switch", "custom"],
+    required: true
+  },
+
+  home: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Home",
     required: true
   },
 
@@ -25,16 +28,20 @@ const DeviceSchema = new mongoose.Schema({
     required: true
   },
 
-  mqttPaths: {
-    controlTopic: String,
-    sensorTopic: String
-  },
+  lastState: mongoose.Schema.Types.Mixed,
 
-  lastValue: mongoose.Schema.Types.Mixed,
+  config: mongoose.Schema.Types.Mixed,
+
   settings: mongoose.Schema.Types.Mixed,
-  config: mongoose.Schema.Types.Mixed
+
+  status: {
+    type: String,
+    enum: ["online", "offline", "error"],
+    default: "online"
+  }
 }, {
   timestamps: true
 });
+
 
 module.exports = mongoose.model("Device", DeviceSchema);

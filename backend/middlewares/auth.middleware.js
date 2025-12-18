@@ -10,23 +10,18 @@ function authenticate(req, res, next) {
 
   const token = authHeader.split(" ")[1];
 
-  jwt.verify(token, process.env.ACCESS_SECRET, (err, decoded) => {
-    if (err) {
-      // 🔥 Quan trọng: phân biệt lỗi để UI phản ứng đúng
-      if (err.name === "TokenExpiredError") {
-        return res.status(401).json({ code: "TOKEN_EXPIRED", message: "Access token expired" });
-      }
+  const decoded = verifyAccessToken(token);
+  
+  if (!decoded) {
+    return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid token" });
+  }
 
-      return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid token" });
-    }
-
-    // OK
-    req.user = decoded;
-    next();
-  });
+  // OK
+  req.userId = decoded.id;
+  next();
 }
 
-// Phân quyền theo role
+// Phân quyền theo role : Hiện tại chưa dùng
 function authorize(roles = []) {
   return (req, res, next) => {
     if (!roles.includes(req.user.role))
