@@ -2,7 +2,6 @@
 const mongoose = require("mongoose");
 
 const EspDeviceSchema = new mongoose.Schema({
-  espId: { type: String, unique: true },
 
   name: String,
 
@@ -14,10 +13,12 @@ const EspDeviceSchema = new mongoose.Schema({
   claimedAt: Date,
 
   // ===== MQTT =====
+  //
   mqttUsername: { type: String, unique: true },
-  mqttPasswordHash: String,
+  mqttPassword: String,
+  flespiTokenId: String,
 
-  mqttBaseTopic: String, // iot/home/{homeId}/esp/{espId}
+  mqttBaseTopic: String, // iot/home/{homeId}/esp/{espDeviceId}
   
   status: {
     type: String,

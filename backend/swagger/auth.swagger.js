@@ -263,3 +263,84 @@
  *                   type: string
  *                   example: "INVALID_REFRESH_TOKEN"
  */
+
+/**
+ * @swagger
+ * /auth/user/{userId}:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get user by ID
+ *     description: This endpoint retrieves user information by their user ID.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The user ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "User retrieved successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "507f1f77bcf86cd799439011"
+ *                         email:
+ *                           type: string
+ *                           example: "user@example.com"
+ *                         username:
+ *                           type: string
+ *                           example: "johndoe"
+ *                         role:
+ *                           type: string
+ *                           example: "user"
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "User not found"
+ *                 errorCode:
+ *                   type: string
+ *                   example: "USER_NOT_FOUND"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
+ *                 errorCode:
+ *                   type: string
+ *                   example: "SERVER_ERROR"
+ */

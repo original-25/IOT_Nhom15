@@ -16,6 +16,9 @@ function authenticate(req, res, next) {
     return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid token" });
   }
 
+  console.log("decoded: ", decoded);
+  
+
   // OK
   req.userId = decoded.id;
   next();

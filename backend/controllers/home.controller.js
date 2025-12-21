@@ -50,14 +50,10 @@ module.exports.createHome = async (req, res) => {
 module.exports.getMyHomes = async (req, res) => {
   try {
     const userId = req.userId;
-
-    console.log("User :", userId);
     
     const homes = await Home.find({
       "members.user": userId
     });
-
-    console.log("check: ", homes);
     
     const data = homes.map(home => {
       const member = home.members.find(
@@ -323,7 +319,7 @@ module.exports.removeMember = async (req, res) => {
 };
 
 
-// Decline invitation (không đổi)
+// Decline invitation
 module.exports.declineInvitation = async (req, res) => {
   try {
     const { token } = req.body;
@@ -358,6 +354,66 @@ module.exports.declineInvitation = async (req, res) => {
     });
   } catch (error) {
     console.error("Decline invitation error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      errorCode: "SERVER_ERROR"
+    });
+  }
+};
+
+/**
+ * Lấy tất cả lời mời được gửi đến user hiện tại
+ */
+module.exports.getMyInvitations = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Lấy email của user hiện tại
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        errorCode: "USER_NOT_FOUND"
+      });
+    }
+
+    // Tìm các lời mời pending gửi đến email của user
+    const invitations = await Invitation.find({
+      inviteeEmail: user.email,
+      status: "pending",
+      expiresAt: { $gt: new Date() }
+    })
+      .populate("home", "name")
+      .populate("inviter", "username email")
+      .sort({ createdAt: -1 });
+
+    const data = invitations.map(inv => ({
+      id: inv._id,
+      token: inv.token,
+      home: {
+        id: inv.home._id,
+        name: inv.home.name
+      },
+      inviter: {
+        id: inv.inviter._id,
+        username: inv.inviter.username,
+        email: inv.inviter.email
+      },
+      inviteeEmail: inv.inviteeEmail,
+      createdAt: inv.createdAt,
+      expiresAt: inv.expiresAt
+    }));
+
+    return res.json({
+      success: true,
+      message: "Get invitations successfully",
+      data
+    });
+  } catch (error) {
+    console.error("Get invitations error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
