@@ -1,9 +1,11 @@
 package com.example.smarthome.repository;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.smarthome.model.data.User;
 import com.example.smarthome.model.request.LoginRequest;
 import com.example.smarthome.model.request.RegisterRequest;
 import com.example.smarthome.model.request.ResetPasswordRequest;
@@ -23,6 +25,9 @@ public class AuthRepository {
     private Gson gson;
     private static final String PREFS_NAME = "AuthPrefs";
     private static final String TOKEN_KEY = "authToken";
+    private static final String KEY_USERNAME = "username";
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_USER_ID = "userId";
 
     public AuthRepository(Context context) {
         this.context = context.getApplicationContext();
@@ -30,9 +35,21 @@ public class AuthRepository {
         this.gson = new Gson();
     }
 
-    public void saveToken(String token) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit().putString(TOKEN_KEY, token).apply();
+    public void saveUserData(User user, String accessToken) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        if (user != null) {
+            editor.putString(KEY_USERNAME, user.getName());
+            editor.putString(KEY_EMAIL, user.getEmail());
+            editor.putString(KEY_USER_ID, user.getId());
+        }
+
+        if (accessToken != null) {
+            editor.putString(TOKEN_KEY, accessToken);
+        }
+
+        editor.apply();
     }
 
     public void login(LoginRequest request, MutableLiveData<AuthResponse> loginResult) {
@@ -42,8 +59,7 @@ public class AuthRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     AuthResponse authResponse = response.body();
 
-                    String token = authResponse.getAccessToken();
-                    if (token != null) saveToken(token);
+                    saveUserData(authResponse.getUser(), authResponse.getAccessToken());
                     loginResult.postValue(authResponse);
 
                 } else if (response.errorBody() != null) {
@@ -95,7 +111,6 @@ public class AuthRepository {
         });
     }
 
-    // Phương thức mới để gửi OTP đăng ký
     public void sendRegistrationOtp(SendOtpRequest request, MutableLiveData<AuthResponse> otpSentResult) {
         apiService.sendRegistrationOtp(request).enqueue(new Callback<AuthResponse>() {
             @Override
@@ -234,8 +249,9 @@ public class AuthRepository {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Tài khoản được tạo thành công
-                    registerResult.postValue(response.body());
+                    AuthResponse authResponse = response.body();
+                    saveUserData(authResponse.getUser(), authResponse.getAccessToken());
+                    registerResult.postValue(authResponse);
                 } else if (response.errorBody() != null) {
                     try {
                         String errorBodyString = response.errorBody().string();

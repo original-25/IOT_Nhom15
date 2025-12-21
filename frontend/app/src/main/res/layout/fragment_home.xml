@@ -11,34 +11,62 @@
         android:id="@+id/text_home_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="SMART HOME DASHBOARD"
-        android:textSize="28sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:text="SMART HOME"
+        android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/button_add_home"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/button_logout"
-        android:layout_marginTop="24dp"/>
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/text_welcome_user"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Chào mừng, Người dùng!"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toStartOf="@id/button_add_home"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_home_title" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_add_home"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="51dp"
+        android:layout_height="63dp"
+        android:text="+"
+        android:textSize="35sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/text_welcome_user"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/text_home_title" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_homes"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/button_logout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_welcome_user"
+        app:layout_constraintVertical_bias="1.0"
+        tools:listitem="@layout/item_home" />
 
     <Button
         android:id="@+id/button_logout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Log Out"
-        app:layout_constraintTop_toTopOf="@id/text_home_title"
-        app:layout_constraintBottom_toBottomOf="@id/text_home_title"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/holo_red_dark"
+        android:text="Đăng xuất"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:backgroundTint="@android:color/holo_red_dark"/>
-
-    <TextView
-        android:id="@+id/text_device_placeholder"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="[DANH SÁCH THIẾT BỊ SẼ HIỂN THỊ TẠI ĐÂY (RECYCLERVIEW)]"
-        android:textSize="16sp"
-        android:textStyle="italic"
-        app:layout_constraintTop_toBottomOf="@id/text_home_title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

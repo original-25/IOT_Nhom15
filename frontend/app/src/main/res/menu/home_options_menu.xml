@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_edit_name"
+        android:title="Cập nhật tên nhà" />
+    <item
+        android:id="@+id/action_view_details"
+        android:title="Chi tiết ngôi nhà" />
+    <item
+        android:id="@+id/action_view_add_device_manager"
+        android:title="Thêm bộ quản lý thiết bị" />
+</menu>
