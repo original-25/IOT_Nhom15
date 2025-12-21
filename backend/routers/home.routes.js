@@ -9,6 +9,7 @@ const {
 // INVITATION ROUTES (MUST BE FIRST)
 router.post("/invitation/accept", authenticate, home.acceptInvitation);
 router.post("/invitation/decline", authenticate, home.declineInvitation);
+router.get("/invitations/me", authenticate, home.getMyInvitations);
 
 // HOME ROUTES
 router.post("/", authenticate, home.createHome);
@@ -22,5 +23,8 @@ router.delete("/:homeId/members/:userId", authenticate, requireHomeOwner, home.r
 // MEMBER ROUTES
 router.get("/:homeId/members", authenticate, requireHomeMember, home.getHomeMembers);
 router.get("/:homeId", authenticate, requireHomeMember, home.getHomeDetail);
+
+
+
 
 module.exports = router;

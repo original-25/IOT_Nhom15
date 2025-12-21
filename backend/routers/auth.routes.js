@@ -11,9 +11,9 @@ router.post("/forgot-password", auth.forgotPassword);
 router.post("/verify-otp", auth.verifyOtp);
 router.post("/reset-password", auth.resetPassword);
 
-
 //acc và ref token
 router.post("/refresh-token", auth.refreshToken);
 
+router.get("/user/:userId", auth.getUserById);
 
 module.exports = router;
