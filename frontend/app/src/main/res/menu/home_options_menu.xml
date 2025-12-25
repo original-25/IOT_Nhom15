@@ -7,6 +7,6 @@
         android:id="@+id/action_view_details"
         android:title="Chi tiết ngôi nhà" />
     <item
-        android:id="@+id/action_view_add_device_manager"
-        android:title="Thêm bộ quản lý thiết bị" />
+        android:id="@+id/action_add_esp_manager"
+        android:title="Quản lý thiết bị" />
 </menu>

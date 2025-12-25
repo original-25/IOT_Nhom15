@@ -1,6 +1,7 @@
 package com.example.smarthome.ui.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -71,6 +72,16 @@ public class HomeFragment extends Fragment {
             public void onDetailsClick(HomeResponse.HomeData home) {
                 Toast.makeText(getContext(), "Chi tiết: " + home.getName(), Toast.LENGTH_SHORT).show();
                 // Xử lý chuyển màn hình chi tiết tại đây
+            }
+
+            @Override
+            public void onManageDevicesClick(HomeResponse.HomeData home) {
+                ESPManagerFragment fragment = ESPManagerFragment.newInstance(home.getId(), home.getName());
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, fragment) // R.id.fragment_container là ID của FrameLayout trong layout chính của bạn
+                        .addToBackStack(null) // Cho phép người dùng nhấn nút Back để quay lại danh sách nhà
+                        .commit();
             }
         });
         recyclerView.setAdapter(adapter);

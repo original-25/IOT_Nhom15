@@ -23,6 +23,7 @@ public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.HomeViewHolder
     public interface OnHomeItemClickListener {
         void onUpdateClick(HomeResponse.HomeData home);
         void onDetailsClick(HomeResponse.HomeData home);
+        void onManageDevicesClick(HomeResponse.HomeData home);
     }
 
     // ĐÃ SỬA: Thêm tham số listener vào Constructor
@@ -56,6 +57,9 @@ public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.HomeViewHolder
                     return true;
                 } else if (itemId == R.id.action_view_details) {
                     listener.onDetailsClick(home);
+                    return true;
+                }else if (itemId == R.id.action_add_esp_manager) {
+                    listener.onManageDevicesClick(home);
                     return true;
                 }
                 return false;
