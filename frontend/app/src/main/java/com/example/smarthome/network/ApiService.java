@@ -1,7 +1,6 @@
 package com.example.smarthome.network;
 
-import android.media.MediaDrm;
-
+import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.request.HomeRequest;
 import com.example.smarthome.model.request.LoginRequest;
 import com.example.smarthome.model.request.ProvisionESPRequest;
@@ -17,7 +16,6 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
-import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.PATCH;
@@ -119,11 +117,11 @@ public interface ApiService {
 //    );
 //
 //    // 3. Get all ESP32 devices of a home (Lấy danh sách thiết bị trong nhà)
-//    @GET("api/home/{homeId}/esp32")
-//    Call<HomeResponse<List<Esp32Device>>> getAllEsp32InHome(
-//            @Header("Authorization") String token,
-//            @Path("homeId") String homeId
-//    );
+    @GET("api/homes/{homeId}/esp32")
+    Call<HomeResponse<List<Esp32Device>>> getAllEsp32InHome(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId
+    );
 //
 //    // 4. Get details of a specific ESP32 device (Xem chi tiết 1 thiết bị)
 //    @GET("api/home/{homeId}/esp32/{id}")
@@ -151,10 +149,10 @@ public interface ApiService {
 //    );
 //
 //    // 7. Get ESP32 device status (Lấy trạng thái online/offline hiện tại)
-//    @GET("api/home/{homeId}/esp32/{id}/status")
-//    Call<HomeResponse<Object>> getEsp32Status(
-//            @Header("Authorization") String token,
-//            @Path("homeId") String homeId,
-//            @Path("id") String deviceId
-//    );
+    @GET("api/home/{homeId}/esp32/{id}/status")
+    Call<HomeResponse<HomeResponse.DeviceStatus>> getEsp32Status(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
 }

@@ -31,4 +31,19 @@ public class HomeResponse<T> {
         public String getName() { return name; }
         public String getRole() { return role; }
     }
+
+    public static class DeviceStatus {
+        @SerializedName("id")
+        private String id;
+
+        @SerializedName("name")
+        private String name;
+
+        @SerializedName("status")
+        private String status;
+
+        public String getId() { return id; }
+        public String getName() { return name; }
+        public String getStatus() { return status; }
+    }
 }
