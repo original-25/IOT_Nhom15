@@ -1,9 +1,14 @@
 package com.example.smarthome.model.data;
 
+import com.google.gson.annotations.SerializedName;
+
 public class User {
     private String id;
     private String email;
+
+    @SerializedName("username") // Ánh xạ chính xác key "username" từ JSON của Backend
     private String name;
+
     private String role;
 
     public User() {}
@@ -16,6 +21,7 @@ public class User {
         return email;
     }
 
+    // Hàm này giờ sẽ trả về giá trị của "username" từ Server
     public String getName() {
         return name;
     }
