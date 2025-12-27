@@ -2,11 +2,13 @@
 const mongoose = require("mongoose");
 
 const DeviceSchema = new mongoose.Schema({
-  deviceId: {
-    type: String,
-    required: true,
-    unique: true
-  },
+
+  // Thừa ->> bỏ qua
+  // deviceId: {
+  //   type: String,
+  //   required: true,
+  //   unique: true
+  // },
 
   name: String,
 
