@@ -35,7 +35,7 @@ exports.provisionEsp32 = async (req, res) => {
       name: name || "ESP32",
       home: home._id,
       claimTokenHash: hashToken(claimToken),
-      claimExpiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 phút
+      claimExpiresAt: new Date(Date.now() + 20 * 60 * 1000), // 5 phút
       status: "unclaimed"
     });
 
@@ -104,7 +104,7 @@ exports.claimEsp32 = async (req, res) => {
     device.mqttUsername = espDeviceId;
     device.mqttPassword = mqttPassword;
     device.flespiTokenId = flespiTokenId;
-    device.mqttBaseTopic = `/iot_nhom15/home/${device.home}/esp32/${espDeviceId}`;
+    device.mqttBaseTopic = `iot_nhom15/home/${device.home}/esp32/${espDeviceId}`;
     device.claimedAt = new Date();
     device.status = "provisioned";
     device.claimTokenHash = null;
