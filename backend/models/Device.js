@@ -38,9 +38,16 @@ const DeviceSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["online", "offline", "error"],
+    enum: ["provisioning", "online", "offline", "error"],
     default: "online"
   }
+  ,
+  // provisioning helpers
+  provisioningCid: { type: String, default: null },
+  provisioningExpiresAt: { type: Date, default: null },
+  provisionAttempts: { type: Number, default: 0 },
+  provisionedAt: { type: Date, default: null },
+  provisionFailedAt: { type: Date, default: null }
 }, {
   timestamps: true
 });

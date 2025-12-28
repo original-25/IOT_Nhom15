@@ -41,6 +41,45 @@ async function createEsp32MqttToken({ homeId, espDeviceId }) {
 }
 
 
+async function createDeviceMqttToken({ homeId, espDeviceId, deviceId }) {
+  const body = [
+    {
+      access: {
+        type: 2,
+        acl: [
+          {
+            uri: "mqtt",
+            topic: `/iot_nhom15/home/${homeId}/esp32/${espDeviceId}/device/${deviceId}`,
+            actions: ["publish", "subscribe"]
+          }
+        ]
+      },
+      ttl: 60 * 60 * 24 * 365 // 1 year
+    }
+  ];
+
+  const res = await axios.post(FLESPI_API, body, {
+    headers: {
+      Authorization: `FlespiToken ${MASTER_TOKEN}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  const tokenObj = res.data?.result?.[0];
+  if (!tokenObj?.key) {
+    throw new Error("Failed to create flespi token");
+  }
+  
+
+  return {
+    flespiTokenId: tokenObj.id,
+    mqttPassword: tokenObj.key,
+    ttl: tokenObj.ttl
+  };
+}
+
+
+
 function deleteAclToken(accessToken, tokenId) {
   return axios.delete(`https://flespi.io/platform/tokens/${tokenId}`, {
     headers: {
@@ -60,5 +99,7 @@ function deleteAclToken(accessToken, tokenId) {
 
 
 module.exports = {
-  createEsp32MqttToken, deleteAclToken
+  createEsp32MqttToken,
+  createDeviceMqttToken,
+  deleteAclToken
 };

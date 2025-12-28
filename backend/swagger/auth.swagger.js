@@ -104,9 +104,10 @@
  *             properties:
  *               email:
  *                 type: string
+ *                 example: "test"
  *               password:
  *                 type: string
- *                 example: "password123"
+ *                 example: "123"
  *     responses:
  *       200:
  *         description: Successfully logged in with access and refresh tokens
