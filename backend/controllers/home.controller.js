@@ -87,6 +87,7 @@ module.exports.getMyHomes = async (req, res) => {
 module.exports.getHomeDetail = async (req, res) => {
   try {
     const home = req.home;
+    await home.populate("members.user", "email");
 
     return res.json({
       success: true,
@@ -95,8 +96,9 @@ module.exports.getHomeDetail = async (req, res) => {
         id: home._id,
         name: home.name,
         members: home.members.map(m => ({
-          userId: m.user,
-          role: m.role
+          userId: m.user._id,
+          role: m.role,
+          email: m.user.email
         }))
       }
     });
