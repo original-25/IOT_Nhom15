@@ -70,8 +70,13 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onDetailsClick(HomeResponse.HomeData home) {
-                Toast.makeText(getContext(), "Chi tiết: " + home.getName(), Toast.LENGTH_SHORT).show();
-                // Xử lý chuyển màn hình chi tiết tại đây
+                // Chuyển sang Fragment Chi tiết nhà
+                HomeDetailFragment detailFragment = HomeDetailFragment.newInstance(home.getId(), home.getName());
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, detailFragment)
+                        .addToBackStack(null) // Để nhấn back quay lại danh sách nhà
+                        .commit();
             }
 
             @Override

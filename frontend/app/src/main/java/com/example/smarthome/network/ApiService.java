@@ -16,6 +16,7 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.PATCH;
@@ -71,11 +72,14 @@ public interface ApiService {
     // 4. Lấy danh sách tất cả các nhà của người dùng
     @GET("api/home")
     Call<HomeResponse<List<HomeResponse.HomeData>>> getAllHomes(@Header("Authorization") String token);
-//
-//    // 5. Lấy thông tin chi tiết của một nhà cụ thể
-//    @GET("api/home/{homeId}")
-//    Call<AuthResponse> getHomeDetails(@Path("homeId") String homeId);
-//
+
+    // 5. Lấy thông tin chi tiết của một nhà cụ thể
+    @GET("api/home/{homeId}")
+    Call<HomeResponse<HomeResponse.HomeDetailData>> getHomeDetail(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId
+    );
+
     // 6. Cập nhật tên của một nhà cụ thể
     @PATCH("api/home/{id}") // Thay đổi từ PUT sang PATCH ở đây
     Call<HomeResponse<HomeResponse.HomeData>> updateHomeName(
@@ -88,12 +92,13 @@ public interface ApiService {
 //    @POST("api/home/{homeId}/invite")
 //    Call<AuthResponse> inviteMember(@Path("homeId") String homeId, @Body Object request);
 //
-//    // 8. Xóa một thành viên khỏi nhà
-//    @DELETE("api/home/{homeId}/members/{userId}")
-//    Call<AuthResponse> removeMember(
-//            @Path("homeId") String homeId,
-//            @Path("userId") String userId
-//    );
+    // 8. Xóa một thành viên khỏi nhà
+    @DELETE("api/home/{homeId}/members/{userId}")
+    Call<HomeResponse<Void>> removeMember(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("userId") String userId
+    );
 //
 //    // 9. Lấy danh sách thành viên của một nhà cụ thể
 //    @GET("api/home/{homeId}/members")
@@ -108,22 +113,15 @@ public interface ApiService {
             @Path("homeId") String homeId,
             @Body ProvisionESPRequest request
     );
-//
-//    // 2. Claim an ESP32 device (Xác nhận quyền sở hữu thiết bị)
-//    @POST("api/esp32/claim")
-//    Call<HomeResponse<Esp32Device>> claimEsp32(
-//            @Header("Authorization") String token,
-//            @Body Object request // Thường chứa deviceId hoặc code
-//    );
-//
-//    // 3. Get all ESP32 devices of a home (Lấy danh sách thiết bị trong nhà)
+
+    //2. Get all ESP32 devices of a home (Lấy danh sách thiết bị trong nhà)
     @GET("api/homes/{homeId}/esp32")
     Call<HomeResponse<List<Esp32Device>>> getAllEsp32InHome(
             @Header("Authorization") String token,
             @Path("homeId") String homeId
     );
 //
-//    // 4. Get details of a specific ESP32 device (Xem chi tiết 1 thiết bị)
+//    // 3. Get details of a specific ESP32 device (Xem chi tiết 1 thiết bị)
 //    @GET("api/home/{homeId}/esp32/{id}")
 //    Call<HomeResponse<Esp32Device>> getEsp32Details(
 //            @Header("Authorization") String token,
@@ -131,7 +129,7 @@ public interface ApiService {
 //            @Path("id") String deviceId
 //    );
 //
-//    // 5. Update a specific ESP32 device (Cập nhật tên/thông tin thiết bị)
+//    // 4. Update a specific ESP32 device (Cập nhật tên/thông tin thiết bị)
 //    @PATCH("api/home/{homeId}/esp32/{id}")
 //    Call<HomeResponse<Esp32Device>> updateEsp32(
 //            @Header("Authorization") String token,
@@ -140,7 +138,7 @@ public interface ApiService {
 //            @Body Object request
 //    );
 //
-//    // 6. Delete a specific ESP32 device (Xóa thiết bị)
+//    // 5. Delete a specific ESP32 device (Xóa thiết bị)
 //    @DELETE("api/home/{homeId}/esp32/{id}")
 //    Call<HomeResponse<Void>> deleteEsp32(
 //            @Header("Authorization") String token,
@@ -148,7 +146,7 @@ public interface ApiService {
 //            @Path("id") String deviceId
 //    );
 //
-//    // 7. Get ESP32 device status (Lấy trạng thái online/offline hiện tại)
+//    // 6. Get ESP32 device status (Lấy trạng thái online/offline hiện tại)
     @GET("api/home/{homeId}/esp32/{id}/status")
     Call<HomeResponse<HomeResponse.DeviceStatus>> getEsp32Status(
             @Header("Authorization") String token,

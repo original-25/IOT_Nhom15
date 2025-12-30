@@ -62,6 +62,50 @@ public class HomeRepository {
         });
     }
 
+    public void getHomeDetail(String token, String homeId, MutableLiveData<HomeResponse<HomeResponse.HomeDetailData>> result) {
+        apiService.getHomeDetail("Bearer " + token, homeId).enqueue(new Callback<HomeResponse<HomeResponse.HomeDetailData>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<HomeResponse.HomeDetailData>> call, Response<HomeResponse<HomeResponse.HomeDetailData>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    // Sử dụng hàm handleError dùng chung của bạn
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<HomeResponse.HomeDetailData>> call, Throwable t) {
+                HomeResponse<HomeResponse.HomeDetailData> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối mạng: " + t.getMessage());
+                result.postValue(error);
+            }
+        });
+    }
+
+    public void removeMember(String token, String homeId, String userId, MutableLiveData<HomeResponse<Void>> result) {
+        apiService.removeMember("Bearer " + token, homeId, userId).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    // Sử dụng hàm handleError dùng chung để parse lỗi từ Backend (như CANNOT_REMOVE_OWNER)
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(error);
+            }
+        });
+    }
+
     public void updateHomeName(String token, String homeId, String newName, MutableLiveData<HomeResponse<HomeResponse.HomeData>> result) {
         HomeRequest request = new HomeRequest(newName);
         apiService.updateHomeName("Bearer " + token, homeId, request).enqueue(new Callback<HomeResponse<HomeResponse.HomeData>>() {

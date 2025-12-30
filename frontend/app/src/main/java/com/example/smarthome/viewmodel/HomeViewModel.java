@@ -18,6 +18,21 @@ public class HomeViewModel extends ViewModel {
 
     private MutableLiveData<HomeResponse<HomeResponse.HomeData>> updateHomeResult = new MutableLiveData<>();
 
+    private MutableLiveData<HomeResponse<HomeResponse.HomeDetailData>> homeDetailResult = new MutableLiveData<>();
+
+    private final MutableLiveData<HomeResponse<Void>> removeMemberResult = new MutableLiveData<>();
+
+    public LiveData<HomeResponse<Void>> getRemoveMemberResult() {
+        return removeMemberResult;
+    }
+
+    public void removeMember(String token, String homeId, String userId) {
+        repository.removeMember(token, homeId, userId, removeMemberResult);
+    }
+    public LiveData<HomeResponse<HomeResponse.HomeDetailData>> getHomeDetailResult() {
+        return homeDetailResult;
+    }
+
     // Getter cho Create Home
     public LiveData<HomeResponse<HomeResponse.HomeData>> getCreateHomeResult() {
         return createHomeResult;
@@ -44,5 +59,9 @@ public class HomeViewModel extends ViewModel {
     // Hàm tạo nhà mới
     public void createHome(String token, String name) {
         repository.createHome(token, new HomeRequest(name), createHomeResult);
+    }
+
+    public void fetchHomeDetail(String token, String homeId) {
+        repository.getHomeDetail(token, homeId, homeDetailResult);
     }
 }
