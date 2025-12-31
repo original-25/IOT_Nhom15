@@ -15,7 +15,6 @@ const EspDeviceSchema = new mongoose.Schema({
   // ===== MQTT =====
   //
   mqttUsername: String,
-  mqttPassword: String,
   flespiTokenId: String,
 
   mqttBaseTopic: String, // iot/home/{homeId}/esp/{espDeviceId}
