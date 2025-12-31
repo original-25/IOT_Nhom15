@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +47,9 @@ public class HomeDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        View btnInvite = view.findViewById(R.id.btn_invite_member);
+        btnInvite.setOnClickListener(v -> showInviteMemberDialog());
+
         if (getArguments() != null) {
             homeId = getArguments().getString("home_id");
             homeName = getArguments().getString("home_name");
@@ -82,6 +87,17 @@ public class HomeDetailFragment extends Fragment {
             }
         });
 
+        homeViewModel.getInviteMemberResult().observe(getViewLifecycleOwner(), response -> {
+            if (response != null) {
+                if (response.isSuccess()) {
+                    Toast.makeText(getContext(), "Đã gửi lời mời thành công!", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Hiển thị lỗi từ backend (ví dụ: User already in home)
+                    Toast.makeText(getContext(), "Lỗi: " + response.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
         // 2. Quan sát kết quả xóa thành viên
         homeViewModel.getRemoveMemberResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null && response.isSuccess()) {
@@ -107,6 +123,40 @@ public class HomeDetailFragment extends Fragment {
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
+    }
+
+    private void showInviteMemberDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Mời thành viên");
+        builder.setMessage("Nhập email người dùng bạn muốn mời vào ngôi nhà này:");
+
+        // Tạo EditText để nhập Email
+        final EditText input = new EditText(requireContext());
+        input.setHint("example@gmail.com");
+        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+
+        // Thêm Padding cho EditText để không bị dính sát mép Dialog
+        FrameLayout container = new FrameLayout(requireContext());
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 50;
+        params.rightMargin = 50;
+        input.setLayoutParams(params);
+        container.addView(input);
+        builder.setView(container);
+
+        builder.setPositiveButton("Gửi lời mời", (dialog, which) -> {
+            String email = input.getText().toString().trim();
+            if (!email.isEmpty()) {
+                // Gọi ViewModel để thực hiện mời
+                homeViewModel.inviteMember(authToken, homeId, email);
+            } else {
+                Toast.makeText(getContext(), "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     @Nullable

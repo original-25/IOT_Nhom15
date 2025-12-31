@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:text="email@example.com"
                 android:textColor="#333333"
-                android:textSize="15sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:text="Vai trò: Owner"
                 android:textColor="#757575"
-                android:textSize="13sp" />
+                android:textSize="15sp" />
         </LinearLayout>
 
         <TextView

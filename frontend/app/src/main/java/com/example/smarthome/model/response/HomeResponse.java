@@ -79,4 +79,30 @@ public class HomeResponse<T> {
         public String getRole() { return role; }
         public String getEmail() { return email; }
     }
+
+    public static class InvitationData {
+        private String id;
+        private String token;
+        private InvitationHome home;
+        private InvitationInviter inviter;
+        private String inviteeEmail;
+
+        // Getters
+        public String getToken() { return token; }
+        public InvitationHome getHome() { return home; }
+        public InvitationInviter getInviter() { return inviter; }
+
+        public static class InvitationHome {
+            private String id;
+            private String name;
+            public String getName() { return name; }
+        }
+
+        public static class InvitationInviter {
+            private String username;
+            private String email;
+            public String getUsername() { return username; }
+            public String getEmail() { return email; }
+        }
+    }
 }

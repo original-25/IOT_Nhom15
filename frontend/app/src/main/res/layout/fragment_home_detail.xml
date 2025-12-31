@@ -18,8 +18,19 @@
             android:layout_height="wrap_content"
             android:text="Thành viên ngôi nhà"
             android:textColor="@android:color/white"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_invite_member"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_add"
+            android:contentDescription="Mời thành viên"
+            app:tint="#FFFFFF" />
     </RelativeLayout>
 
     <androidx.cardview.widget.CardView
@@ -41,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:text="Tên nhà: Loading..."
                 android:textColor="#333333"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -50,7 +61,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Danh sách thành viên chính thức"
                 android:textColor="#757575"
-                android:textSize="13sp" />
+                android:textSize="18sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

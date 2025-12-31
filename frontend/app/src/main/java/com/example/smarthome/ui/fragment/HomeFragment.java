@@ -24,6 +24,7 @@ import com.example.smarthome.R;
 import com.example.smarthome.model.response.HomeResponse;
 import com.example.smarthome.ui.MainActivity;
 import com.example.smarthome.ui.adapter.HomeAdapter;
+import com.example.smarthome.ui.adapter.InvitationAdapter;
 import com.example.smarthome.viewmodel.HomeViewModel;
 
 import java.util.ArrayList;
@@ -36,7 +37,10 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerView;
     private HomeAdapter adapter;
     private final List<HomeResponse.HomeData> listHomes = new ArrayList<>();
+    private List<HomeResponse.InvitationData> invitationList = new ArrayList<>();
     private String authToken;
+
+    private AlertDialog invitationDialog;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -96,13 +100,29 @@ public class HomeFragment extends Fragment {
         observeCreateHomeResult();
         observeUpdateHomeResult();
 
+        observeAcceptInvitation();
+        observeDeclineInvitation();
+
         // 3. Tải dữ liệu ban đầu
         if (authToken != null && !authToken.isEmpty()) {
             homeViewModel.fetchAllHomes(authToken);
         }
 
+        homeViewModel.fetchMyInvitations(authToken);
+
         view.findViewById(R.id.button_add_home).setOnClickListener(v -> showAddHomeDialog());
+        view.findViewById(R.id.button_invitations).setOnClickListener(v -> showInvitationsDialog());
         view.findViewById(R.id.button_logout).setOnClickListener(v -> handleLogout());
+
+        homeViewModel.getInvitationsResult().observe(getViewLifecycleOwner(), response -> {
+            if (response != null && response.isSuccess()) {
+                invitationList = response.getData();
+                // Nếu có lời mời, bạn có thể đổi màu nút 📩 hoặc hiện thông báo ở đây
+                if (!invitationList.isEmpty()) {
+                    Toast.makeText(getContext(), "Bạn có " + invitationList.size() + " lời mời mới!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     // Quan sát danh sách nhà trả về
@@ -112,6 +132,28 @@ public class HomeFragment extends Fragment {
                 listHomes.clear();
                 listHomes.addAll(response.getData());
                 adapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    private void observeAcceptInvitation() {
+        homeViewModel.getAcceptInvitationResult().observe(getViewLifecycleOwner(), response -> {
+            if (response != null && response.isSuccess()) {
+                Toast.makeText(getContext(), "Gia nhập nhà thành công!", Toast.LENGTH_SHORT).show();
+                homeViewModel.fetchAllHomes(authToken); // Tải lại danh sách nhà để hiện nhà mới
+                homeViewModel.fetchMyInvitations(authToken); // Cập nhật lại danh sách lời mời (để biến mất cái vừa nhận)
+            } else if (response != null) {
+                Toast.makeText(getContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // 2. Quan sát kết quả Từ chối
+    private void observeDeclineInvitation() {
+        homeViewModel.getDeclineInvitationResult().observe(getViewLifecycleOwner(), response -> {
+            if (response != null && response.isSuccess()) {
+                Toast.makeText(getContext(), "Đã từ chối lời mời", Toast.LENGTH_SHORT).show();
+                homeViewModel.fetchMyInvitations(authToken); // Tải lại để lời mời biến mất
             }
         });
     }
@@ -179,6 +221,49 @@ public class HomeFragment extends Fragment {
         if (hour >= 5 && hour < 12) return "Chào buổi sáng";
         if (hour >= 12 && hour < 18) return "Chào buổi chiều";
         return "Chào buổi tối";
+    }
+
+    private void showInvitationsDialog() {
+        if (invitationList == null || invitationList.isEmpty()) {
+            Toast.makeText(getContext(), "Không có lời mời nào", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        // Inflate layout custom của bạn
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_invitations, null);
+        builder.setView(dialogView);
+        builder.setTitle("Danh sách lời mời");
+
+        RecyclerView rv = dialogView.findViewById(R.id.recycler_view_invitations);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        InvitationAdapter invAdapter = new InvitationAdapter(invitationList, new InvitationAdapter.OnInvitationClickListener() {
+            @Override
+            public void onAccept(HomeResponse.InvitationData invitation) {
+                homeViewModel.acceptInvitation(authToken, invitation.getToken());
+                if (invitationDialog != null) invitationDialog.dismiss(); // Đóng dialog sau khi bấm
+            }
+
+            @Override
+            public void onDecline(HomeResponse.InvitationData invitation) {
+                homeViewModel.declineInvitation(authToken, invitation.getToken());
+                if (invitationDialog != null) invitationDialog.dismiss();
+            }
+        });
+
+        rv.setAdapter(invAdapter);
+        builder.setNegativeButton("Đóng", (dialog, which) -> dialog.dismiss());
+
+        invitationDialog = builder.create();
+        invitationDialog.show();
+    }
+
+    private void acceptInvite(HomeResponse.InvitationData invitation) {
+        // Gọi API acceptInvitation đã viết ở bước trước
+        // Sau khi thành công, nhớ gọi homeViewModel.fetchAllHomes(authToken) để cập nhật danh sách nhà mới
+        Toast.makeText(getContext(), "Đang chấp nhận lời mời...", Toast.LENGTH_SHORT).show();
+        // homeViewModel.acceptInvitation(authToken, invitation.getToken());
     }
 
     private void showAddHomeDialog() {

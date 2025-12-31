@@ -6,7 +6,11 @@ import com.example.smarthome.model.response.HomeResponse;
 import com.example.smarthome.network.ApiService;
 import com.example.smarthome.network.RetrofitClient;
 import com.google.gson.Gson;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -58,6 +62,102 @@ public class HomeRepository {
                 failure.setSuccess(false);
                 failure.setMessage("Lỗi kết nối mạng");
                 result.postValue(failure);
+            }
+        });
+    }
+
+    public void inviteMember(String token, String homeId, String email, MutableLiveData<HomeResponse<Void>> result) {
+        // Tạo body request dưới dạng Map {"email": "nguoi_nhan@gmail.com"}
+        Map<String, String> request = new HashMap<>();
+        request.put("email", email);
+
+        apiService.inviteMember("Bearer " + token, homeId, request).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    // Sử dụng hàm handleError dùng chung để bắt lỗi USER_ALREADY_IN_HOME hoặc EMAIL_REQUIRED
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối mạng: " + t.getMessage());
+                result.postValue(error);
+            }
+        });
+    }
+
+    public void getMyInvitations(String token, MutableLiveData<HomeResponse<List<HomeResponse.InvitationData>>> result) {
+        apiService.getMyInvitations("Bearer " + token).enqueue(new Callback<HomeResponse<List<HomeResponse.InvitationData>>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<List<HomeResponse.InvitationData>>> call, Response<HomeResponse<List<HomeResponse.InvitationData>>> response) {
+
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<List<HomeResponse.InvitationData>>> call, Throwable t) {
+                HomeResponse<List<HomeResponse.InvitationData>> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối mạng: " + t.getMessage());
+                result.postValue(error);
+            }
+        });
+    }
+
+    public void acceptInvitation(String authToken, String inviteToken, MutableLiveData<HomeResponse<Void>> result) {
+        Map<String, String> body = new HashMap<>();
+        body.put("token", inviteToken);
+
+        apiService.acceptInvitation("Bearer " + authToken, body).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(error);
+            }
+        });
+    }
+
+    public void declineInvitation(String authToken, String inviteToken, MutableLiveData<HomeResponse<Void>> result) {
+        Map<String, String> body = new HashMap<>();
+        body.put("token", inviteToken);
+
+        apiService.declineInvitation("Bearer " + authToken, body).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    handleError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> error = new HomeResponse<>();
+                error.setSuccess(false);
+                error.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(error);
             }
         });
     }

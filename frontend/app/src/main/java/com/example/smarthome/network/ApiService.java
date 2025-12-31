@@ -13,6 +13,7 @@ import com.example.smarthome.model.response.Esp32ProvisionResponse;
 import com.example.smarthome.model.response.HomeResponse;
 
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -54,13 +55,19 @@ public interface ApiService {
 
     //-------------------------------------------------Home------------------------------------------------------
 
-//    // 1. Chấp nhận lời mời vào nhà
-//    @POST("api/home/invitation/accept")
-//    Call<AuthResponse> acceptInvitation(@Body Object request); // Thay Object bằng Request model nếu có
-//
-//    // 2. Từ chối lời mời vào nhà
-//    @POST("api/home/invitation/decline")
-//    Call<AuthResponse> declineInvitation(@Body Object request);
+    // 1. Chấp nhận lời mời vào nhà
+    @POST("api/home/invitation/accept")
+    Call<HomeResponse<Void>> acceptInvitation(
+            @Header("Authorization") String token,
+            @Body Map<String, String> request
+    );
+
+    // 2. Từ chối lời mời vào nhà
+    @POST("api/home/invitation/decline")
+    Call<HomeResponse<Void>> declineInvitation(
+            @Header("Authorization") String token,
+            @Body Map<String, String> request
+    );
 
     // 3. Tạo một ngôi nhà mới
     @POST("api/home")
@@ -88,10 +95,14 @@ public interface ApiService {
             @Body HomeRequest request
 );
 //
-//    // 7. Mời một thành viên vào nhà
-//    @POST("api/home/{homeId}/invite")
-//    Call<AuthResponse> inviteMember(@Path("homeId") String homeId, @Body Object request);
-//
+    // 7. Mời một thành viên vào nhà
+    @POST("api/home/{homeId}/invite")
+    Call<HomeResponse<Void>> inviteMember(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Body Map<String, String> request
+    );
+
     // 8. Xóa một thành viên khỏi nhà
     @DELETE("api/home/{homeId}/members/{userId}")
     Call<HomeResponse<Void>> removeMember(
@@ -103,6 +114,12 @@ public interface ApiService {
 //    // 9. Lấy danh sách thành viên của một nhà cụ thể
 //    @GET("api/home/{homeId}/members")
 //    Call<AuthResponse> getHomeMembers(@Path("homeId") String homeId);
+
+    // 10. Lấy lời mời của một user
+    @GET("api/home/invitations/me")
+    Call<HomeResponse<List<HomeResponse.InvitationData>>> getMyInvitations(
+            @Header("Authorization") String token
+    );
 
     //----------------------------------------------ESP32 Devices-----------------------------------------------
 

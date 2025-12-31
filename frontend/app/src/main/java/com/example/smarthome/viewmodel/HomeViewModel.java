@@ -22,13 +22,17 @@ public class HomeViewModel extends ViewModel {
 
     private final MutableLiveData<HomeResponse<Void>> removeMemberResult = new MutableLiveData<>();
 
-    public LiveData<HomeResponse<Void>> getRemoveMemberResult() {
-        return removeMemberResult;
+    private final MutableLiveData<HomeResponse<Void>> inviteMemberResult = new MutableLiveData<>();
+
+    private final MutableLiveData<HomeResponse<List<HomeResponse.InvitationData>>> invitationsResult = new MutableLiveData<>();
+
+    private final MutableLiveData<HomeResponse<Void>> acceptInvitationResult = new MutableLiveData<>();
+    private final MutableLiveData<HomeResponse<Void>> declineInvitationResult = new MutableLiveData<>();
+
+    public LiveData<HomeResponse<List<HomeResponse.InvitationData>>> getInvitationsResult() {
+        return invitationsResult;
     }
 
-    public void removeMember(String token, String homeId, String userId) {
-        repository.removeMember(token, homeId, userId, removeMemberResult);
-    }
     public LiveData<HomeResponse<HomeResponse.HomeDetailData>> getHomeDetailResult() {
         return homeDetailResult;
     }
@@ -45,6 +49,43 @@ public class HomeViewModel extends ViewModel {
 
     public LiveData<HomeResponse<HomeResponse.HomeData>> getUpdateHomeResult() {
         return updateHomeResult;
+    }
+
+    public LiveData<HomeResponse<Void>> getRemoveMemberResult() {
+        return removeMemberResult;
+    }
+    public LiveData<HomeResponse<Void>> getInviteMemberResult() {
+        return inviteMemberResult;
+    }
+
+    public LiveData<HomeResponse<Void>> getAcceptInvitationResult() {
+        return acceptInvitationResult;
+    }
+
+    public LiveData<HomeResponse<Void>> getDeclineInvitationResult() {
+        return declineInvitationResult;
+    }
+
+    // --- Phương thức thực thi API Chấp nhận ---
+    public void acceptInvitation(String token, String inviteToken) {
+        repository.acceptInvitation(token, inviteToken, acceptInvitationResult);
+    }
+
+    // --- Phương thức thực thi API Từ chối ---
+    public void declineInvitation(String token, String inviteToken) {
+        repository.declineInvitation(token, inviteToken, declineInvitationResult);
+    }
+
+    public void fetchMyInvitations(String token) {
+        repository.getMyInvitations(token, invitationsResult);
+    }
+
+    public void inviteMember(String token, String homeId, String email) {
+        repository.inviteMember(token, homeId, email, inviteMemberResult);
+    }
+
+    public void removeMember(String token, String homeId, String userId) {
+        repository.removeMember(token, homeId, userId, removeMemberResult);
     }
 
     public void updateHomeName(String token, String homeId, String newName) {
