@@ -2,20 +2,25 @@
 const mongoose = require("mongoose");
 
 const DeviceSchema = new mongoose.Schema({
-  deviceId: {
-    type: String,
-    required: true,
-    unique: true
-  },
 
-  name: {
-    type: String,
-    required: true
-  },
+  // Thừa ->> bỏ qua
+  // deviceId: {
+  //   type: String,
+  //   required: true,
+  //   unique: true
+  // },
+
+  name: String,
 
   type: {
     type: String,
     enum: ["relay", "sensor", "light", "fan", "switch", "custom"],
+    required: true
+  },
+
+  home: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Home",
     required: true
   },
 
@@ -25,16 +30,27 @@ const DeviceSchema = new mongoose.Schema({
     required: true
   },
 
-  mqttPaths: {
-    controlTopic: String,
-    sensorTopic: String
-  },
+  lastState: mongoose.Schema.Types.Mixed,
 
-  lastValue: mongoose.Schema.Types.Mixed,
+  config: mongoose.Schema.Types.Mixed,
+
   settings: mongoose.Schema.Types.Mixed,
-  config: mongoose.Schema.Types.Mixed
+
+  status: {
+    type: String,
+    enum: ["provisioning", "online", "offline", "error"],
+    default: "online"
+  }
+  ,
+  // provisioning helpers
+  provisioningCid: { type: String, default: null },
+  provisioningExpiresAt: { type: Date, default: null },
+  provisionAttempts: { type: Number, default: 0 },
+  provisionedAt: { type: Date, default: null },
+  provisionFailedAt: { type: Date, default: null }
 }, {
   timestamps: true
 });
+
 
 module.exports = mongoose.model("Device", DeviceSchema);

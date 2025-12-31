@@ -9,9 +9,16 @@ const HomeSchema = new mongoose.Schema({
 
   members: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      role: ["owner", "viewer", "editor"]
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+      },
+      role: {
+        type: String,
+        enum: ["owner", "member"],
+        default: "member"
+      }
     }
   ]
 }, {
