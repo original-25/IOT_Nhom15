@@ -1,8 +1,14 @@
 package com.example.smarthome.ui;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -11,17 +17,18 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.smarthome.R;
-import com.example.smarthome.ui.fragment.LoginFragment; // Cần import LoginFragment
+import com.example.smarthome.ui.fragment.LoginFragment;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int PERMISSION_REQUEST_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // [Cần đảm bảo R.id.main là ID của layout chính trong activity_main.xml]
         setContentView(R.layout.activity_main);
 
-        // --- GIỮ LẠI LOGIC XỬ LÝ WINDOW INSETS (Không thay đổi) ---
+        // --- GIỮ LẠI LOGIC XỬ LÝ WINDOW INSETS ---
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -29,30 +36,50 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // ==============================================================
-        // BỔ SUNG: LOGIC TẢI FRAGMENT (CHỈ TẢI LẦN ĐẦU)
+        // BỔ SUNG: XIN QUYỀN VỊ TRÍ (Cần thiết cho ESP32 Config trên điện thoại thật)
         // ==============================================================
-        if (savedInstanceState == null) {
-            // Kiểm tra savedInstanceState == null để đảm bảo Fragment chỉ được thêm một lần
-            // (khi Activity bị hủy và tạo lại, Fragment sẽ tự động khôi phục)
+        requestRuntimePermissions();
 
-            // 1. Khởi tạo FragmentManager
+        // LOGIC TẢI FRAGMENT (CHỈ TẢI LẦN ĐẦU)
+        if (savedInstanceState == null) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-            // 2. Thêm LoginFragment vào Container
-            // R.id.fragment_container: ID của FrameLayout trong activity_main.xml
             fragmentTransaction.add(R.id.fragment_container, new LoginFragment());
-
-            // 3. Thực hiện giao dịch
             fragmentTransaction.commit();
         }
     }
 
-    // Hàm tiện ích để chuyển đổi Fragment đơn giản
+    private void requestRuntimePermissions() {
+        // Chỉ cần xin quyền từ Android 6.0 (API 23) trở lên
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Hiển thị hộp thoại xin quyền vị trí
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    // Xử lý kết quả sau khi người dùng nhấn Cho phép/Từ chối
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Đã cấp quyền thành công
+            } else {
+                Toast.makeText(this, "Bạn cần cấp quyền vị trí để ứng dụng có thể cấu hình ESP32", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     public void replaceFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, fragment);
-        transaction.addToBackStack(null); // Cho phép nhấn nút Back
+        transaction.addToBackStack(null);
         transaction.commit();
     }
 }
