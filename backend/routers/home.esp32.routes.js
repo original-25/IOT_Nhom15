@@ -59,6 +59,6 @@ router.delete(
 /* ================= ESP32 API ================= */
 
 // ESP32 claim (KHÔNG auth)
-router.post("/esp32/claim", ctrl.claimEsp32);
+// router.post("/esp32/claim", ctrl.claimEsp32);
 
 module.exports = router;

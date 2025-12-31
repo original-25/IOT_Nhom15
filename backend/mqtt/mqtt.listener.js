@@ -1,7 +1,13 @@
 const mqtt = require("mqtt");
+const crypto = require("crypto");
 const Device = require("../models/Device");
 const DeviceLog = require("../models/DeviceLog");
 const EspDevice = require("../models/EspDevice");
+const { createEsp32MqttToken } = require("../services/flespi.service");
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 const MQTT_URL = process.env.MQTT_URL || "mqtt://mqtt.flespi.io";
 const MQTT_PORT = process.env.MQTT_PORT ? parseInt(process.env.MQTT_PORT, 10) : 1883;
@@ -45,6 +51,50 @@ client.on("message", async (topic, message) => {
 		// ESP-level messages: iot_nhom15/home/{homeId}/esp32/{espId}/{action}
 		if (nodeType === "esp32" && espId && parts[5]) {
 			const action = parts[5]; // cmd/data/state/ack/status
+
+			// handle ESP32 claim via ack topic
+			if (action === "ack" && payload.action === "create esp32") {
+				const { claimToken } = payload;
+				console.log("check var: ", claimToken)
+				if (!claimToken) {
+					console.warn("mqtt.listener: Missing claimToken in create esp32 ack");
+					return;
+				}
+
+				try {
+					const tokenHash = hashToken(claimToken);
+					const device = await EspDevice.findOne({
+						_id: espId,
+						home: homeId,
+						claimTokenHash: tokenHash,
+						status: "unclaimed"
+					});
+
+					console.log("vcl 2: ", device)
+
+					if (!device) {
+						console.warn("mqtt.listener: Invalid or expired claim token for espDeviceId:", espId);
+						return;
+					}
+
+					else {
+						console.log("vê cê lờ")
+					}
+
+					// Update device status
+					device.status = "provisioned";
+					device.claimedAt = new Date();
+					device.claimTokenHash = null;
+					device.claimExpiresAt = null;
+					await device.save();
+
+					console.log("mqtt.listener: ESP32 claimed successfully:", espId);
+
+				} catch (error) {
+					console.error("mqtt.listener: Error claiming ESP32:", error);
+				}
+				return;
+			}
 
 			// handle ESP status/heartbeat
 			if (action === "status") {
