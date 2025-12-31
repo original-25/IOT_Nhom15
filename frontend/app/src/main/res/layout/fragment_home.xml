@@ -44,6 +44,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_home_title" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_invitations"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="51dp"
+        android:layout_height="63dp"
+        android:layout_marginEnd="8dp"
+        android:text="📩"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="@id/text_welcome_user"
+        app:layout_constraintEnd_toStartOf="@id/button_add_home"
+        app:layout_constraintTop_toTopOf="@id/text_home_title" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_homes"
         android:layout_width="0dp"

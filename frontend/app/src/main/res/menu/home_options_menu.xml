@@ -5,7 +5,7 @@
         android:title="Cập nhật tên nhà" />
     <item
         android:id="@+id/action_view_details"
-        android:title="Chi tiết ngôi nhà" />
+        android:title="Quản lý thành viên" />
     <item
         android:id="@+id/action_add_esp_manager"
         android:title="Quản lý thiết bị" />
