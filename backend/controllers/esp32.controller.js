@@ -31,19 +31,72 @@ exports.provisionEsp32 = async (req, res) => {
 
     const claimToken = generateClaimToken();
 
+    // Create ESP32 device first
     const device = await EspDevice.create({
       name: name || "ESP32",
       home: home._id,
       claimTokenHash: hashToken(claimToken),
-      claimExpiresAt: new Date(Date.now() + 20 * 60 * 1000), // 5 phút
+      claimExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 phút
       status: "unclaimed"
     });
+
+    const espDeviceId = device._id.toString();
+
+    // Create Flespi MQTT token immediately
+    const {
+      flespiTokenId,
+      mqttPassword,
+      ttl
+    } = await createEsp32MqttToken({
+      homeId: home._id.toString(),
+      espDeviceId
+    });
+
+    // Update device with MQTT credentials
+    device.mqttUsername = espDeviceId;
+    device.mqttPassword = mqttPassword;
+    device.flespiTokenId = flespiTokenId;
+    device.mqttBaseTopic = `iot_nhom15/home/${home._id}/esp32/${espDeviceId}`;
+    await device.save();
+
+    // Set timeout to delete device if not claimed within 3 minutes
+    setTimeout(async () => {
+      try {
+        const unclaimed = await EspDevice.findOne({
+          _id: espDeviceId,
+          status: "unclaimed"
+        });
+        
+        if (unclaimed) {
+          console.log(`ESP32 ${espDeviceId} not claimed within 3 minutes, deleting...`);
+          // Revoke Flespi token
+          if (unclaimed.flespiTokenId) {
+            try {
+              const accessToken = process.env.MASTER_FLESPI_TOKEN;
+              await deleteAclToken(accessToken, unclaimed.flespiTokenId);
+            } catch (err) {
+              console.error("Error revoking Flespi token:", err);
+            }
+          }
+          await unclaimed.deleteOne();
+        }
+      } catch (err) {
+        console.error("Error in provision timeout:", err);
+      }
+    }, 10 * 60 * 1000); // 3 minutes
 
     return res.json({
       success: true,
       espDeviceId: device._id,
       claimToken,
-      expiresIn: 300
+      expiresIn: 180,
+      mqtt: {
+        host: "mqtt.flespi.io",
+        port: 1883,
+        username: device.mqttUsername,
+        password: mqttPassword,
+        baseTopic: device.mqttBaseTopic
+      }
     });
   } catch (error) {
     console.error("provisionEsp32 error:", error);
