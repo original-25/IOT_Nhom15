@@ -9,11 +9,13 @@ public class Esp32ProvisionResponse implements java.io.Serializable {
     private String claimToken;
     private int expiresIn;
 
-    // Thêm đối tượng mqtt để hứng dữ liệu từ backend
+    // BỔ SUNG: Hai trường này để chứa thông tin Wi-Fi người dùng nhập
+    private String ssid;
+    private String pass;
+
     @SerializedName("mqtt")
     private MqttConfig mqtt;
 
-    // --- Inner Class để chứa thông tin cấu hình MQTT ---
     public static class MqttConfig implements java.io.Serializable {
         private String host;
         private int port;
@@ -21,7 +23,6 @@ public class Esp32ProvisionResponse implements java.io.Serializable {
         private String password;
         private String baseTopic;
 
-        // Getters cho MqttConfig
         public String getHost() { return host; }
         public int getPort() { return port; }
         public String getUsername() { return username; }
@@ -29,7 +30,14 @@ public class Esp32ProvisionResponse implements java.io.Serializable {
         public String getBaseTopic() { return baseTopic; }
     }
 
-    // --- Getters cho class chính ---
+    // --- Getters & Setters mới cho SSID và Password ---
+    public String getSsid() { return ssid; }
+    public void setSsid(String ssid) { this.ssid = ssid; }
+
+    public String getPass() { return pass; }
+    public void setPass(String pass) { this.pass = pass; }
+
+    // --- Getters cũ ---
     public boolean isSuccess() { return success; }
     public String getMessage() { return message; }
     public String getEspDeviceId() { return espDeviceId; }
@@ -37,7 +45,7 @@ public class Esp32ProvisionResponse implements java.io.Serializable {
     public int getExpiresIn() { return expiresIn; }
     public MqttConfig getMqtt() { return mqtt; }
 
-    // --- Setters (Dùng cho hàm handleError trong Repo hoặc khi cần khởi tạo thủ công) ---
+    // --- Setters cũ ---
     public void setSuccess(boolean success) { this.success = success; }
     public void setMessage(String message) { this.message = message; }
     public void setEspDeviceId(String espDeviceId) { this.espDeviceId = espDeviceId; }

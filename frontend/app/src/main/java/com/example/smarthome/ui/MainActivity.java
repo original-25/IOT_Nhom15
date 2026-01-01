@@ -19,6 +19,9 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.smarthome.R;
 import com.example.smarthome.ui.fragment.LoginFragment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -35,12 +38,9 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // ==============================================================
-        // BỔ SUNG: XIN QUYỀN VỊ TRÍ (Cần thiết cho ESP32 Config trên điện thoại thật)
-        // ==============================================================
+        // BỔ SUNG: XIN TẤT CẢ CÁC QUYỀN CẦN THIẾT CHO BLE
         requestRuntimePermissions();
 
-        // LOGIC TẢI FRAGMENT (CHỈ TẢI LẦN ĐẦU)
         if (savedInstanceState == null) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -50,28 +50,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestRuntimePermissions() {
-        // Chỉ cần xin quyền từ Android 6.0 (API 23) trở lên
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
+        List<String> permissionsNeeded = new ArrayList<>();
 
-                // Hiển thị hộp thoại xin quyền vị trí
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        PERMISSION_REQUEST_CODE);
+        // 1. Quyền Vị trí (Cần thiết để tìm thấy thiết bị BLE trên nhiều phiên bản Android)
+        permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        // 2. Quyền Bluetooth cho Android 12 (API 31) trở lên
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissionsNeeded.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissionsNeeded.add(Manifest.permission.BLUETOOTH_CONNECT);
+        }
+
+        // Lọc ra các quyền chưa được cấp
+        List<String> listPermissionsToRequest = new ArrayList<>();
+        for (String perm : permissionsNeeded) {
+            if (ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsToRequest.add(perm);
             }
+        }
+
+        // Nếu có quyền chưa cấp, hiển thị hộp thoại xin quyền
+        if (!listPermissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(this,
+                    listPermissionsToRequest.toArray(new String[0]),
+                    PERMISSION_REQUEST_CODE);
         }
     }
 
-    // Xử lý kết quả sau khi người dùng nhấn Cho phép/Từ chối
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Đã cấp quyền thành công
-            } else {
-                Toast.makeText(this, "Bạn cần cấp quyền vị trí để ứng dụng có thể cấu hình ESP32", Toast.LENGTH_LONG).show();
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (!allGranted) {
+                Toast.makeText(this, "Bạn cần cấp đủ quyền Bluetooth và Vị trí để cấu hình thiết bị!", Toast.LENGTH_LONG).show();
             }
         }
     }
