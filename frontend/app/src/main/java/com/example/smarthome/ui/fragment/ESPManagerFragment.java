@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,15 +40,14 @@ public class ESPManagerFragment extends Fragment {
     private String mHomeName;
     private String authToken;
 
-    private final Handler pollingHandler = new Handler(Looper.getMainLooper());
-    private Runnable pollingRunnable;
-    private String pendingDeviceId;
-    private ProgressDialog progressDialog;
-
     private ESPViewModel espViewModel;
     private RecyclerView recyclerView;
     private ESPAdapter adapter;
     private final List<Esp32Device> listDevices = new ArrayList<>();
+    private final Handler pollingHandler = new Handler(Looper.getMainLooper());
+    private Runnable pollingRunnable;
+    private String pendingDeviceId;
+    private ProgressDialog progressDialog;
 
     public static ESPManagerFragment newInstance(String homeId, String homeName) {
         ESPManagerFragment fragment = new ESPManagerFragment();
@@ -85,47 +83,53 @@ public class ESPManagerFragment extends Fragment {
         authToken = prefs.getString("authToken", "");
 
         TextView textTitle = view.findViewById(R.id.text_title_manager);
-        textTitle.setText(mHomeName != null ? "Bộ quản lý thiết bị của " + mHomeName : "Bộ quản lý thiết bị");
+        textTitle.setText(mHomeName != null ? "Quản lý thiết bị: " + mHomeName : "Quản lý thiết bị");
 
         // Thiết lập RecyclerView
         recyclerView = view.findViewById(R.id.recycler_devices);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Khởi tạo Adapter với list trống ban đầu
         adapter = new ESPAdapter(listDevices, device -> {
             if (!"provisioned".equals(device.getStatus())) {
-                // Nếu click vào thiết bị chưa cấu hình, có thể mở lại trang hướng dẫn
-                Toast.makeText(getContext(), "Thiết bị chưa được cấu hình Wi-Fi", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Thiết bị này chưa được cấu hình WiFi", Toast.LENGTH_SHORT).show();
             }
         });
         recyclerView.setAdapter(adapter);
 
-        // Đăng ký các Observer
+        // Đăng ký Observers
         observeProvisionResult();
-        observeESPStatus();
         observeEspDevicesList();
 
-        // Tải danh sách lần đầu
-//        if (!authToken.isEmpty()) {
-//            espViewModel.fetchAllEspDevices(authToken, mHomeId);
-//        }
+        // Tải danh sách thiết bị hiện có
+        refreshDeviceList();
 
         ImageButton btnAddDevice = view.findViewById(R.id.btn_add_device);
         btnAddDevice.setOnClickListener(v -> showAddEspDialog());
+
+        // LẮNG NGHE KẾT QUẢ TỪ CONFIG FRAGMENT
+        getParentFragmentManager().setFragmentResultListener("ble_config_result", getViewLifecycleOwner(), (requestKey, bundle) -> {
+            String deviceId = bundle.getString("pending_device_id");
+            if (deviceId != null) {
+                startPollingStatus(deviceId);
+            }
+        });
+
+        // QUAN SÁT STATUS RESULT TỪ VIEWMODEL
+        observeESPStatus();
     }
 
+    // Luồng xử lý sau khi Server tạo thiết bị thành công
     private void observeProvisionResult() {
         espViewModel.getProvisionResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null && response.isSuccess()) {
-                // 1. Kích hoạt Polling trạng thái thiết bị
-                startPolling(response.getEspDeviceId());
+                // Bước 1: Server đã tạo Device ID và Token (Status: pending)
+                // Bước 2: Chuyển sang màn hình quét Bluetooth để tìm thiết bị vật lý
 
-                // 2. Chuyển sang Fragment cấu hình - Truyền trọn bộ response
-                ESPConfigFragment configFragment = ESPConfigFragment.newInstance(response);
+                BleScanFragment scanFragment = BleScanFragment.newInstance(response);
 
                 getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, configFragment)
-                        .addToBackStack(null)
+                        .replace(R.id.fragment_container, scanFragment)
+                        .addToBackStack("manager_fragment") // Quan trọng để quay lại đúng màn hình
                         .commit();
             } else if (response != null) {
                 Toast.makeText(getContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
@@ -133,34 +137,10 @@ public class ESPManagerFragment extends Fragment {
         });
     }
 
-    private void observeESPStatus() {
-        espViewModel.getStatusResult().observe(getViewLifecycleOwner(), response -> {
-            if (response != null && response.isSuccess() && response.getData() != null) {
-                String status = response.getData().getStatus();
-
-                if ("provisioned".equals(status)) {
-                    stopPolling();
-                    pendingDeviceId = null;
-                    Toast.makeText(getContext(), "Thiết bị đã kết nối thành công!", Toast.LENGTH_LONG).show();
-
-                    // Cập nhật lại danh sách thiết bị trên màn hình
-                    espViewModel.fetchAllEspDevices(authToken, mHomeId);
-                } else {
-                    if (progressDialog != null && progressDialog.isShowing()) {
-                        progressDialog.setMessage("Đang đợi thiết bị trực tuyến...\nVui lòng đảm bảo bạn đã quay về WiFi nhà.");
-                    }
-                }
-            }
-        });
-    }
-
     private void observeEspDevicesList() {
         espViewModel.getEspDevicesResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null && response.isSuccess() && response.getData() != null) {
-                // Sử dụng phương thức updateData của Adapter để làm mới danh sách
                 adapter.updateData(response.getData());
-            } else if (response != null) {
-                Toast.makeText(getContext(), "Không thể tải danh sách: " + response.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -168,38 +148,32 @@ public class ESPManagerFragment extends Fragment {
     private void showAddEspDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         final EditText input = new EditText(getContext());
-        input.setHint("Ví dụ: ESP32 Phòng Khách");
+        input.setHint("Tên thiết bị (VD: ESP32 Tầng 1)");
 
         FrameLayout container = new FrameLayout(requireContext());
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = 50;
-        params.rightMargin = 50;
+        params.leftMargin = 60;
+        params.rightMargin = 60;
         input.setLayoutParams(params);
         container.addView(input);
 
-        builder.setTitle("Thêm bộ quản lý mới")
-                .setMessage("Nhập tên cho thiết bị ESP32 của bạn")
+        builder.setTitle("Thêm thiết bị mới")
                 .setView(container)
-                .setCancelable(false)
-                .setPositiveButton("Thêm", (dialog, which) -> {
+                .setPositiveButton("Tiếp theo", (dialog, which) -> {
                     String espName = input.getText().toString().trim();
                     if (!espName.isEmpty()) {
+                        // Gọi API tạo thiết bị trên Server trước
                         espViewModel.provisionEsp32(authToken, mHomeId, espName);
-                    } else {
-                        Toast.makeText(getContext(), "Tên không được để trống", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Hủy", null)
                 .show();
     }
 
-    private void startPolling(String deviceId) {
-        pendingDeviceId = deviceId;
-        showLoadingDialog("Đang khởi tạo cấu hình...");
-
-        // Xóa các callback cũ nếu có để tránh chạy song song nhiều polling
-        pollingHandler.removeCallbacks(pollingRunnable);
+    private void startPollingStatus(String deviceId) {
+        this.pendingDeviceId = deviceId;
+        showLoadingDialog("Đang đợi thiết bị trực tuyến...");
 
         pollingRunnable = new Runnable() {
             @Override
@@ -207,11 +181,28 @@ public class ESPManagerFragment extends Fragment {
                 if (pendingDeviceId != null) {
                     // Gọi hàm check status trong ViewModel
                     espViewModel.checkESPStatus(authToken, mHomeId, pendingDeviceId);
-                    pollingHandler.postDelayed(this, 3000); // Lặp lại sau 3s
+                    // Lặp lại sau mỗi 3 giây
+                    pollingHandler.postDelayed(this, 3000);
                 }
             }
         };
         pollingHandler.post(pollingRunnable);
+    }
+
+    private void observeESPStatus() {
+        espViewModel.getStatusResult().observe(getViewLifecycleOwner(), response -> {
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                String status = response.getData().getStatus();
+
+                // Nếu thiết bị đã chuyển sang trạng thái provisioned (Online)
+                if ("provisioned".equals(status)) {
+                    stopPolling();
+                    Toast.makeText(getContext(), "Thiết bị đã trực tuyến!", Toast.LENGTH_SHORT).show();
+                    // Làm mới danh sách để thiết bị hiện ra
+                    refreshDeviceList();
+                }
+            }
+        });
     }
 
     private void stopPolling() {
@@ -230,14 +221,27 @@ public class ESPManagerFragment extends Fragment {
             progressDialog.setCancelable(false);
         }
         progressDialog.setMessage(message);
-        if (!progressDialog.isShowing()) {
-            progressDialog.show();
+        progressDialog.show();
+    }
+
+
+
+    private void refreshDeviceList() {
+        if (!authToken.isEmpty()) {
+            espViewModel.fetchAllEspDevices(authToken, mHomeId);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Cập nhật lại danh sách mỗi khi quay lại màn hình này (ví dụ sau khi cấu hình xong)
+        refreshDeviceList();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        stopPolling();
+        stopPolling(); // Quan trọng: Ngừng polling khi thoát Fragment để tránh rò rỉ bộ nhớ
     }
 }

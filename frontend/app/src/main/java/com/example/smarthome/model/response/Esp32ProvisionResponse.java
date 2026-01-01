@@ -20,13 +20,11 @@ public class Esp32ProvisionResponse implements java.io.Serializable {
         private String host;
         private int port;
         private String username;
-        private String password;
         private String baseTopic;
 
         public String getHost() { return host; }
         public int getPort() { return port; }
         public String getUsername() { return username; }
-        public String getPassword() { return password; }
         public String getBaseTopic() { return baseTopic; }
     }
 
