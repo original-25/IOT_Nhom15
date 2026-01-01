@@ -117,17 +117,11 @@ public class ESPManagerFragment extends Fragment {
     private void observeProvisionResult() {
         espViewModel.getProvisionResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null && response.isSuccess()) {
-                String idCuaESP = response.getEspDeviceId();
-                String tokenClaim = response.getClaimToken();
-                Log.d("ESP_DEBUG", "ID: " + idCuaESP + " | Token: " + tokenClaim);
-                // 1. Kích hoạt Polling ngay lập tức
+                // 1. Kích hoạt Polling trạng thái thiết bị
                 startPolling(response.getEspDeviceId());
 
-                // 2. Chuyển sang Fragment hướng dẫn
-                ESPConfigFragment configFragment = ESPConfigFragment.newInstance(
-                        response.getClaimToken(),
-                        response.getEspDeviceId()
-                );
+                // 2. Chuyển sang Fragment cấu hình - Truyền trọn bộ response
+                ESPConfigFragment configFragment = ESPConfigFragment.newInstance(response);
 
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, configFragment)
