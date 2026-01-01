@@ -35,7 +35,7 @@ async function createEsp32MqttToken({ homeId, espDeviceId }) {
 
   return {
     flespiTokenId: tokenObj.id,
-    mqttPassword: tokenObj.key, // ESP32 dùng cái này
+    mqttUsername: tokenObj.key, // ESP32 dùng cái này
     ttl: tokenObj.ttl
   };
 }

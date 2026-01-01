@@ -13,6 +13,7 @@ const DeviceSchema = new mongoose.Schema({
   name: String,
 
   type: {
+    // "sensor", "light", "fan"
     type: String,
     enum: ["relay", "sensor", "light", "fan", "switch", "custom"],
     required: true
