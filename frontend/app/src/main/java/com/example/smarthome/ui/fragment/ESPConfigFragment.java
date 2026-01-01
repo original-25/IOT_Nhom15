@@ -1,23 +1,13 @@
 package com.example.smarthome.ui.fragment;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +19,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.smarthome.R;
@@ -41,23 +30,25 @@ import java.util.UUID;
 
 public class ESPConfigFragment extends Fragment {
 
-    // Đảm bảo các UUID này khớp chính xác với code trên ESP32
-    private final UUID SERVICE_UUID = UUID.fromString("12345678-1234-1234-1234-123456789abc");
+    // UUID Characteristic dùng chung để ghi dữ liệu
     private final UUID CHAR_UUID = UUID.fromString("87654321-4321-4321-4321-cba987654321");
 
     private Esp32ProvisionResponse mData;
+    private BluetoothDevice targetDevice;
+    private UUID dynamicServiceUuid;
+
     private EditText editSSID, editPassword;
     private Button btnSend;
     private ProgressBar progressBar;
-
-    private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt bluetoothGatt;
-    private BluetoothDevice targetDevice;
 
-    public static ESPConfigFragment newInstance(Esp32ProvisionResponse response) {
+    // Sửa newInstance để nhận thêm Device và Service UUID động
+    public static ESPConfigFragment newInstance(Esp32ProvisionResponse response, BluetoothDevice device, String serviceUuid) {
         ESPConfigFragment fragment = new ESPConfigFragment();
         Bundle args = new Bundle();
         args.putSerializable("provision_data", response);
+        args.putParcelable("selected_device", device);
+        args.putString("dynamic_service_uuid", serviceUuid);
         fragment.setArguments(args);
         return fragment;
     }
@@ -67,9 +58,9 @@ public class ESPConfigFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mData = (Esp32ProvisionResponse) getArguments().getSerializable("provision_data");
+            targetDevice = getArguments().getParcelable("selected_device");
+            dynamicServiceUuid = UUID.fromString(getArguments().getString("dynamic_service_uuid"));
         }
-        BluetoothManager bluetoothManager = (BluetoothManager) requireContext().getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
     }
 
     @Nullable
@@ -87,79 +78,42 @@ public class ESPConfigFragment extends Fragment {
         btnSend = view.findViewById(R.id.btn_send_to_esp);
         progressBar = view.findViewById(R.id.progress_loading);
 
-        btnSend.setOnClickListener(v -> startBleProvisioning());
+        btnSend.setOnClickListener(v -> {
+            String ssid = editSSID.getText().toString().trim();
+            String pass = editPassword.getText().toString().trim();
+
+            if (ssid.isEmpty() || pass.isEmpty()) {
+                Toast.makeText(getContext(), "Vui lòng nhập đầy đủ thông tin WiFi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Gán dữ liệu vào mData
+            mData.setSsid(ssid);
+            mData.setPass(pass);
+
+            // In log để kiểm tra gói tin JSON
+            String debugJson = new Gson().toJson(mData);
+            Log.d("DEBUG_PAYLOAD", "Gói tin chuẩn bị gửi: " + debugJson);
+
+            // Bắt đầu kết nối trực tiếp vì đã có Device từ màn hình Scan
+            connectToDevice();
+        });
     }
 
-    // --- BƯỚC 1: QUÉT TÌM ESP32 ---
-    private void startBleProvisioning() {
-        if (!hasPermissions()) {
-            Toast.makeText(getContext(), "Vui lòng cấp quyền Bluetooth và Vị trí trong cài đặt", Toast.LENGTH_SHORT).show();
+    @SuppressLint("MissingPermission")
+    private void connectToDevice() {
+        if (targetDevice == null) {
+            Toast.makeText(getContext(), "Lỗi: Không tìm thấy thông tin thiết bị!", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            Toast.makeText(getContext(), "Vui lòng bật Bluetooth", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String ssid = editSSID.getText().toString().trim();
-        String pass = editPassword.getText().toString().trim();
-
-        if (ssid.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(getContext(), "Vui lòng nhập thông tin Wi-Fi", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Cập nhật thông tin vào object mData (Yêu cầu đã thêm Setter trong Model)
-        mData.setSsid(ssid);
-        mData.setPass(pass);
 
         progressBar.setVisibility(View.VISIBLE);
         btnSend.setEnabled(false);
-        targetDevice = null;
 
-        Toast.makeText(getContext(), "Đang tìm thiết bị ESP32...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Đang kết nối tới " + targetDevice.getName() + "...", Toast.LENGTH_SHORT).show();
 
-        // Bắt đầu quét BLE với kiểm tra quyền rõ ràng
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            bluetoothAdapter.getBluetoothLeScanner().startScan(scanCallback);
-        }
-
-        // Timeout sau 10 giây
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (targetDevice == null) {
-                stopScan();
-                handleError("Không tìm thấy thiết bị. Hãy chắc chắn ESP32 đang bật BLE.");
-            }
-        }, 10000);
-    }
-
-    private final ScanCallback scanCallback = new ScanCallback() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            BluetoothDevice device = result.getDevice();
-            // Lọc thiết bị theo tên hiển thị
-            if (device != null && device.getName() != null && device.getName().contains("ESP32")) {
-                targetDevice = device;
-                stopScan();
-                connectToDevice(device);
-            }
-        }
-    };
-
-    @SuppressLint("MissingPermission")
-    private void stopScan() {
-        if (bluetoothAdapter != null && bluetoothAdapter.getBluetoothLeScanner() != null) {
-            bluetoothAdapter.getBluetoothLeScanner().stopScan(scanCallback);
-        }
-    }
-
-    // --- BƯỚC 2: KẾT NỐI GATT ---
-    @SuppressLint("MissingPermission")
-    private void connectToDevice(BluetoothDevice device) {
-        getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Đã thấy thiết bị, đang kết nối...", Toast.LENGTH_SHORT).show());
-        bluetoothGatt = device.connectGatt(getContext(), false, gattCallback);
+        // Kết nối GATT
+        bluetoothGatt = targetDevice.connectGatt(getContext(), false, gattCallback);
     }
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -167,7 +121,8 @@ public class ESPConfigFragment extends Fragment {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                gatt.requestMtu(517); // Request MTU lớn để gửi chuỗi JSON MQTT Token
+                Log.d("BLE_CONFIG", "Connected! Requesting MTU 517...");
+                gatt.requestMtu(517); // Bắt buộc xin MTU lớn trước khi tìm service
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 handleError("Mất kết nối Bluetooth với ESP32");
             }
@@ -177,6 +132,7 @@ public class ESPConfigFragment extends Fragment {
         @Override
         public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("BLE_CONFIG", "MTU set to " + mtu + ". Discovering services...");
                 gatt.discoverServices();
             }
         }
@@ -189,14 +145,22 @@ public class ESPConfigFragment extends Fragment {
             }
         }
 
+        // Trong ESPConfigFragment.java, tại hàm onCharacteristicWrite:
         @Override
         @SuppressLint("MissingPermission")
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             getActivity().runOnUiThread(() -> {
                 progressBar.setVisibility(View.GONE);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Toast.makeText(getContext(), "Gửi cấu hình thành công!", Toast.LENGTH_LONG).show();
-                    getParentFragmentManager().popBackStack();
+                    Toast.makeText(getContext(), "Gửi cấu hình thành công! Đang đợi thiết bị kết nối...", Toast.LENGTH_LONG).show();
+
+                    // Gửi kết quả về ESPManagerFragment
+                    Bundle result = new Bundle();
+                    result.putString("pending_device_id", mData.getEspDeviceId()); // ID của ESP vừa cấu hình
+                    getParentFragmentManager().setFragmentResult("ble_config_result", result);
+
+                    // Quay lại màn hình quản lý
+                    getParentFragmentManager().popBackStack("manager_fragment", 0);
                 } else {
                     btnSend.setEnabled(true);
                     Toast.makeText(getContext(), "Lỗi ghi dữ liệu BLE: " + status, Toast.LENGTH_SHORT).show();
@@ -206,19 +170,18 @@ public class ESPConfigFragment extends Fragment {
         }
     };
 
-    // --- BƯỚC 3: GỬI DỮ LIỆU ---
     @SuppressLint("MissingPermission")
     private void sendProvisioningData(BluetoothGatt gatt) {
-        BluetoothGattService service = gatt.getService(SERVICE_UUID);
+        // Dùng Service UUID động nhận được từ ScanFragment
+        BluetoothGattService service = gatt.getService(dynamicServiceUuid);
         if (service == null) {
-            handleError("Không tìm thấy Service phù hợp trên ESP32");
+            handleError("Không tìm thấy Service tương ứng trên ESP32");
             return;
         }
 
         BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHAR_UUID);
         if (characteristic != null) {
             String jsonPayload = new Gson().toJson(mData);
-
             characteristic.setValue(jsonPayload.getBytes(StandardCharsets.UTF_8));
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
             gatt.writeCharacteristic(characteristic);
@@ -235,14 +198,6 @@ public class ESPConfigFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             });
         }
-    }
-
-    private boolean hasPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
-        }
-        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     @SuppressLint("MissingPermission")

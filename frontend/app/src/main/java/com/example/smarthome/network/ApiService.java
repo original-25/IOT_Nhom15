@@ -132,7 +132,7 @@ public interface ApiService {
     );
 
     //2. Get all ESP32 devices of a home (Lấy danh sách thiết bị trong nhà)
-    @GET("api/homes/{homeId}/esp32")
+    @GET("api/home/{homeId}/esp32")
     Call<HomeResponse<List<Esp32Device>>> getAllEsp32InHome(
             @Header("Authorization") String token,
             @Path("homeId") String homeId
