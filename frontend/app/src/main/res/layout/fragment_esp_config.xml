@@ -31,6 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
+            android:textColor="@android:color/black"
             android:text="Đảm bảo Bluetooth trên điện thoại đã bật. Ứng dụng sẽ tự động tìm và kết nối với thiết bị ESP32 gần đây."
             android:textSize="20sp" />
 
@@ -49,6 +50,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:hint="Nhập tên Wi-Fi nhà bạn"
+            android:textColor="@android:color/black"
             android:background="@android:drawable/edit_text"
             android:padding="12dp"/>
 
@@ -58,6 +60,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:hint="Nhập mật khẩu Wi-Fi"
+            android:textColor="@android:color/black"
             android:inputType="textPassword"
             android:background="@android:drawable/edit_text"
             android:padding="12dp"/>
@@ -69,6 +72,7 @@
             android:layout_marginTop="30dp"
             android:text="Gửi qua Bluetooth &amp; Kết nối"
             android:textAllCaps="true"
+            android:textSize="18sp"
             android:backgroundTint="@android:color/black"
             android:textColor="@android:color/white" />
 
