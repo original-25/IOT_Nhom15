@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -115,6 +116,7 @@ public class BleScanFragment extends Fragment {
 
         isScanning = true;
         progressBar.setVisibility(View.VISIBLE);
+        Log.d("BLE_DEBUG", "startScan called"); // Thêm dòng này
         tvStatus.setText("Đang tìm kiếm thiết bị SmartHome...");
 
         bluetoothAdapter.getBluetoothLeScanner().startScan(scanCallback);
@@ -169,12 +171,17 @@ public class BleScanFragment extends Fragment {
     };
 
     private void goToConfig(BluetoothDevice device, String serviceUuid) {
-        ESPConfigFragment configFragment = ESPConfigFragment.newInstance(mProvisionData, device, serviceUuid);
+        ESPConfigFragment configFragment =
+                ESPConfigFragment.newInstance(mProvisionData, device, serviceUuid);
+
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, configFragment)
+                // Thay vì đặt tên mới gây rối, hãy dùng null
+                // vì "manager_fragment" đã được đặt ở mốc trước đó rồi
                 .addToBackStack(null)
                 .commit();
     }
+
 
     private boolean hasLocationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

@@ -1,12 +1,14 @@
 package com.example.smarthome.ui.fragment;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +22,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.example.smarthome.R;
 import com.example.smarthome.model.response.Esp32ProvisionResponse;
@@ -91,10 +94,6 @@ public class ESPConfigFragment extends Fragment {
             mData.setSsid(ssid);
             mData.setPass(pass);
 
-            // In log để kiểm tra gói tin JSON
-            String debugJson = new Gson().toJson(mData);
-            Log.d("DEBUG_PAYLOAD", "Gói tin chuẩn bị gửi: " + debugJson);
-
             // Bắt đầu kết nối trực tiếp vì đã có Device từ màn hình Scan
             connectToDevice();
         });
@@ -149,21 +148,37 @@ public class ESPConfigFragment extends Fragment {
         @Override
         @SuppressLint("MissingPermission")
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            getActivity().runOnUiThread(() -> {
+            Activity activity = getActivity();
+            Context context = getContext();
+            if (activity == null || context == null) {
+                gatt.disconnect();
+                gatt.close();
+                return;
+            }
+
+            activity.runOnUiThread(() -> {
                 progressBar.setVisibility(View.GONE);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Toast.makeText(getContext(), "Gửi cấu hình thành công! Đang đợi thiết bị kết nối...", Toast.LENGTH_LONG).show();
+                    Toast.makeText(
+                            context.getApplicationContext(),
+                            "Gửi cấu hình thành công! Đang đợi thiết bị kết nối...",
+                            Toast.LENGTH_LONG
+                    ).show();
 
-                    // Gửi kết quả về ESPManagerFragment
                     Bundle result = new Bundle();
-                    result.putString("pending_device_id", mData.getEspDeviceId()); // ID của ESP vừa cấu hình
+                    result.putString("pending_device_id", mData.getEspDeviceId());
                     getParentFragmentManager().setFragmentResult("ble_config_result", result);
 
-                    // Quay lại màn hình quản lý
                     getParentFragmentManager().popBackStack("manager_fragment", 0);
+
+
                 } else {
                     btnSend.setEnabled(true);
-                    Toast.makeText(getContext(), "Lỗi ghi dữ liệu BLE: " + status, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(
+                            context.getApplicationContext(),
+                            "Lỗi ghi dữ liệu BLE: " + status,
+                            Toast.LENGTH_SHORT
+                    ).show();
                 }
             });
             gatt.disconnect();
@@ -191,14 +206,19 @@ public class ESPConfigFragment extends Fragment {
     }
 
     private void handleError(String message) {
-        if (isAdded()) {
-            getActivity().runOnUiThread(() -> {
-                progressBar.setVisibility(View.GONE);
-                btnSend.setEnabled(true);
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-            });
-        }
+        Context context = getContext();
+        if (context == null) return;
+
+        Activity activity = getActivity();
+        if (activity == null) return;
+
+        activity.runOnUiThread(() -> {
+            progressBar.setVisibility(View.GONE);
+            btnSend.setEnabled(true);
+            Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        });
     }
+
 
     @SuppressLint("MissingPermission")
     @Override

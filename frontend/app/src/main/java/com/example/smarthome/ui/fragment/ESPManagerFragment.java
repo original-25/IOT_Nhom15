@@ -122,17 +122,20 @@ public class ESPManagerFragment extends Fragment {
     private void observeProvisionResult() {
         espViewModel.getProvisionResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null && response.isSuccess()) {
-                // Bước 1: Server đã tạo Device ID và Token (Status: pending)
-                // Bước 2: Chuyển sang màn hình quét Bluetooth để tìm thiết bị vật lý
-
                 BleScanFragment scanFragment = BleScanFragment.newInstance(response);
+
+                // QUAN TRỌNG: Reset giá trị ngay sau khi lấy được dữ liệu thành công
+                // Điều này ngăn chặn việc quay lại fragment này khi nhấn nút Back
+                espViewModel.resetProvisionResult();
 
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, scanFragment)
-                        .addToBackStack("manager_fragment") // Quan trọng để quay lại đúng màn hình
+                        .addToBackStack(null)
                         .commit();
             } else if (response != null) {
                 Toast.makeText(getContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
+                // Reset cả khi lỗi để không hiện lại Toast khi xoay màn hình
+                espViewModel.resetProvisionResult();
             }
         });
     }

@@ -49,4 +49,8 @@ public class ESPViewModel extends ViewModel {
     public void fetchAllEspDevices(String token, String homeId) {
         repository.getAllEsp32InHome(token, homeId, espDevicesResult);
     }
+
+    public void resetProvisionResult() {
+        provisionResult.setValue(null);
+    }
 }
