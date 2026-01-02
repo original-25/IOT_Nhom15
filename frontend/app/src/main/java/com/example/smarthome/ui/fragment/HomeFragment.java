@@ -83,15 +83,15 @@ public class HomeFragment extends Fragment {
                         .commit();
             }
 
-            @Override
             public void onManageDevicesClick(HomeResponse.HomeData home) {
                 ESPManagerFragment fragment = ESPManagerFragment.newInstance(home.getId(), home.getName());
 
                 getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, fragment) // R.id.fragment_container là ID của FrameLayout trong layout chính của bạn
-                        .addToBackStack(null) // Cho phép người dùng nhấn nút Back để quay lại danh sách nhà
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack("manager_fragment") // THÊM DÒNG NÀY
                         .commit();
             }
+
         });
         recyclerView.setAdapter(adapter);
 
