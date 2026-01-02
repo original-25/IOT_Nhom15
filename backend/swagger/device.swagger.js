@@ -40,13 +40,8 @@
  *                 description: Device-specific configuration object
  *                 example:
  *                   pin: 12
- *                   invert: false
- *               settings:
- *                 type: object
- *                 description: Device runtime settings (UI/state preferences)
- *                 example:
- *                   label: "Ceiling Light"
- *                   visible: true
+ *                   pin2: 5
+ *               
  *     responses:
  *       201:
  *         description: Device created

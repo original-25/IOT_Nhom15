@@ -139,7 +139,7 @@ client.on("message", async (topic, message) => {
 					const t = payload.type
 					await DeviceLog.create({
 						device: device._id,
-						type: t,
+						type: t||"sensor",
 						data: payload.data ?? payload,
 						createdAt: payload.timestamp ? new Date(payload.timestamp) : new Date()
 					});
