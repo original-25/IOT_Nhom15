@@ -16,7 +16,7 @@
         android:text="Bộ quản lý thiết bị"
         tools:text="Bộ quản lý thiết bị của [Tên Nhà]"
         android:textColor="@android:color/black"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/btn_add_device"
         app:layout_constraintStart_toStartOf="parent"

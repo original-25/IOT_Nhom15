@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:text="Vai trò: Owner"
                 android:textColor="#757575"
-                android:textSize="15sp" />
+                android:textSize="16sp" />
         </LinearLayout>
 
         <TextView

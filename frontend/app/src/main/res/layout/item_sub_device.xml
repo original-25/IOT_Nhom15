@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:text="Tên thiết bị"
             android:textColor="#212121"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
