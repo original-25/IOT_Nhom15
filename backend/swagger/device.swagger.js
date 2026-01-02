@@ -189,7 +189,7 @@
  *         application/json:
  *           schema:
  *             type: object
- *             example: { "action": "set", "value": 1 }
+ *             example: { "action": "state", "value": 1 }
  *     responses:
  *       200:
  *         description: Command published
