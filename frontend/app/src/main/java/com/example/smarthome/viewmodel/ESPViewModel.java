@@ -121,7 +121,7 @@ public class ESPViewModel extends ViewModel {
         Map<String, Object> payload = new HashMap<>();
 
         // Theo tài liệu Screenshot 153833:
-        payload.put("action", "set");           // Action cố định là "set"
+        payload.put("action", "state");
         payload.put("value", turnOn ? 1 : 0);   // Value là 1 nếu bật, 0 nếu tắt
 
         repository.sendDeviceCommand(token, homeId, deviceId, payload, commandResult);
