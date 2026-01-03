@@ -2,6 +2,7 @@ package com.example.smarthome.repository;
 
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.smarthome.model.request.CreateDeviceRequest;
 import com.example.smarthome.model.response.Device;
 import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.request.ProvisionESPRequest;
@@ -133,6 +134,118 @@ public class ESPRepository {
             @Override
             public void onFailure(Call<HomeResponse<Esp32Device>> call, Throwable t) {
                 HomeResponse<Esp32Device> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối Server: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    // ESPRepository.java
+    public void createDevice(String token, String homeId, CreateDeviceRequest request, MutableLiveData<HomeResponse<Device>> result) {
+        // Backend yêu cầu: POST /homes/{homeId}/devices
+        apiService.createDevice("Bearer " + token, homeId, request).enqueue(new Callback<HomeResponse<Device>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Device>> call, Response<HomeResponse<Device>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Khi thành công, Backend trả về object Device với status "provisioning"
+                    result.postValue(response.body());
+                } else {
+                    // Sử dụng hàm xử lý lỗi chung đã có trong Repo của bạn
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Device>> call, Throwable t) {
+                HomeResponse<Device> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối Server: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void deleteSubDevice(String token, String homeId, String deviceId, MutableLiveData<HomeResponse<Void>> result) {
+        apiService.deleteSubDevice("Bearer " + token, homeId, deviceId).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Thành công: Backend trả về { "success": true, "message": "Device removed", ... }
+                    result.postValue(response.body());
+                } else {
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void sendDeviceCommand(String token, String homeId, String deviceId, Map<String, Object> payload, MutableLiveData<HomeResponse<Void>> result) {
+        apiService.sendCommand("Bearer " + token, homeId, deviceId, payload).enqueue(new Callback<HomeResponse<Void>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Void>> call, Response<HomeResponse<Void>> response) {
+                if (response.isSuccessful()) {
+                    result.postValue(response.body());
+                } else {
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Void>> call, Throwable t) {
+                HomeResponse<Void> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void getDeviceState(String token, String homeId, String deviceId, MutableLiveData<HomeResponse<HomeResponse.DeviceState>> result) {
+        apiService.getDeviceState("Bearer " + token, homeId, deviceId).enqueue(new Callback<HomeResponse<HomeResponse.DeviceState>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<HomeResponse.DeviceState>> call, Response<HomeResponse<HomeResponse.DeviceState>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.postValue(response.body());
+                } else {
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<HomeResponse.DeviceState>> call, Throwable t) {
+                HomeResponse<HomeResponse.DeviceState> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi lấy trạng thái: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void updateSubDevice(String token, String homeId, String deviceId, Map<String, Object> updates, MutableLiveData<HomeResponse<Device>> result) {
+        apiService.updateSubDevice("Bearer " + token, homeId, deviceId, updates).enqueue(new Callback<HomeResponse<Device>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Device>> call, Response<HomeResponse<Device>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Khi thành công, Backend trả về object Device đã được cập nhật
+                    result.postValue(response.body());
+                } else {
+                    // Sử dụng hàm xử lý lỗi chung handleGenericError đã có trong Repo
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Device>> call, Throwable t) {
+                HomeResponse<Device> failure = new HomeResponse<>();
                 failure.setSuccess(false);
                 failure.setMessage("Lỗi kết nối Server: " + t.getMessage());
                 result.postValue(failure);

@@ -1,5 +1,6 @@
 package com.example.smarthome.network;
 
+import com.example.smarthome.model.request.CreateDeviceRequest;
 import com.example.smarthome.model.response.Device;
 import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.request.HomeRequest;
@@ -179,5 +180,47 @@ public interface ApiService {
             @Header("Authorization") String token,
             @Path("homeId") String homeId,
             @Path("espId") String espId
+    );
+
+    // 2.Thêm device
+    @POST("api/homes/{homeId}/devices")
+    Call<HomeResponse<Device>> createDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Body CreateDeviceRequest request
+    );
+
+    // 3. Xóa device
+    @DELETE("api/homes/{homeId}/devices/{id}")
+    Call<HomeResponse<Void>> deleteSubDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 4.Gửi lệnh điều khiển (Bật/Tắt)
+    @POST("api/homes/{homeId}/devices/{id}/command")
+    Call<HomeResponse<Void>> sendCommand(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Body Map<String, Object> payload
+    );
+
+    // 5.Lấy trạng thái mới nhất của thiết bị
+    @GET("api/homes/{homeId}/devices/{id}/state")
+    Call<HomeResponse<HomeResponse.DeviceState>> getDeviceState(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 6.Update thiết bị
+    @PATCH("api/homes/{homeId}/devices/{id}")
+    Call<HomeResponse<Device>> updateSubDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Body Map<String, Object> updates
     );
 }
