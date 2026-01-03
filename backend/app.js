@@ -4,6 +4,7 @@ const authRoutes = require("./routers/auth.routes");
 const homeRoutes = require("./routers/home.routes");
 const esp32Routes = require("./routers/home.esp32.routes");
 const deviceRoutes = require("./routers/devices.routes");
+const schedulerRoutes = require("./routers/scheduler.routes")
 require('./mqtt/mqtt.listener');
 
 const { swaggerDocs, swaggerUi } = require("./config/swagger");
@@ -23,6 +24,8 @@ app.use("/api/home", homeRoutes);
 app.use("/api", esp32Routes)
 
 app.use("/api", deviceRoutes)
+
+app.use("/api", schedulerRoutes)
 
 
 

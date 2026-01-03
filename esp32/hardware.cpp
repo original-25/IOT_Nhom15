@@ -250,100 +250,219 @@ void controlMotor(int pinA, int pinB, bool state) {
     }
 }
 
-void handleCreate(String payload) {
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, payload);
-  
-  String typeStr = doc["payload"]["device"]["type"].as<String>();
-  String deviceId = doc["payload"]["device"]["deviceId"].as<String>();
-  String cid = doc["payload"]["cid"].as<String>();
-  
-  int pin1 = doc["payload"]["device"]["config"]["pin"] | 0;
-  int pin2 = doc["payload"]["device"]["config"]["pin2"] | 0; 
+void handleCreate(String jsonString) {
+  Serial.println("\n╔════════════════════════════════════╗");
+  Serial.println("║       HANDLE CREATE STARTED        ║");
+  Serial.println("╚════════════════════════════════════╝");
 
-  // Check duplicate
+  // 1. In ra chuỗi JSON gốc nhận được từ MQTT để kiểm tra format
+  Serial.print(">> [Raw JSON]: ");
+  Serial.println(jsonString);
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, jsonString);
+
+  if (error) {
+    Serial.print(">> [ERROR] JSON Deserialize failed: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // 2. Parse dữ liệu và in ra các giá trị đọc được
+  String cid = doc["cid"].as<String>();
+  String deviceId = doc["device"]["id"].as<String>(); 
+  String typeStr = doc["device"]["type"].as<String>();
+  
+  // Lấy Pin. Lưu ý cú pháp | 0 để default về 0 nếu không có
+  int pin1 = doc["device"]["config"]["pin"] | 0; 
+  int pin2 = doc["device"]["config"]["pin2"] | 0;
+
+  Serial.println(">> [Parsed Data]:");
+  Serial.printf("   - CID: %s\n", cid.c_str());
+  Serial.printf("   - Device ID: %s\n", deviceId.c_str());
+  Serial.printf("   - Type String: %s\n", typeStr.c_str());
+  Serial.printf("   - Pin 1: %d\n", pin1);
+  Serial.printf("   - Pin 2: %d\n", pin2);
+
+  // 3. Kiểm tra trùng lặp
   for(int i=0; i<deviceCount; i++) {
       if(String(devices[i].id) == deviceId) {
+          Serial.println(">> [Info] Device ID exists. Resending ACK...");
+          sendAck("create", cid, deviceId, true); 
+          return;
+      }
+      if (devices[i].pin == pin1 && pin1 != 0) {
+          Serial.printf(">> [ERROR] Pin %d is already used by another device!\n", pin1);
           sendAck("create", cid, deviceId, false);
           return;
       }
   }
 
+  // 4. Bắt đầu tạo thiết bị và Mapping Type
   if (deviceCount < 10) {
     deviceId.toCharArray(devices[deviceCount].id, 25);
     devices[deviceCount].pin = pin1;
     devices[deviceCount].pin2 = pin2;
-    
-    if (typeStr == "sensor") devices[deviceCount].type = TYPE_SENSOR;
-    else if (typeStr == "motor") devices[deviceCount].type = TYPE_MOTOR;
-    else devices[deviceCount].type = TYPE_OUTPUT;
-    
     devices[deviceCount].state = false;
+
+    // --- LOGIC MAPPING (Theo cập nhật Light/Fan/Sensor) ---
+    Serial.print(">> [Mapping Logic]: ");
     
-    // Init Pin
+    if (typeStr == "sensor") {
+        devices[deviceCount].type = TYPE_SENSOR;
+        Serial.println("Mapped to TYPE_SENSOR (1)");
+    } 
+    else if (typeStr == "fan") {
+        devices[deviceCount].type = TYPE_MOTOR;
+        Serial.println("Mapped to TYPE_MOTOR (2) -> Using 2 Pins");
+    } 
+    else if (typeStr == "light") {
+        devices[deviceCount].type = TYPE_OUTPUT;
+        Serial.println("Mapped to TYPE_OUTPUT (0)");
+    } 
+    else {
+        devices[deviceCount].type = TYPE_OUTPUT;
+        Serial.printf("Unknown type '%s' -> Defaulting to TYPE_OUTPUT (0)\n", typeStr.c_str());
+    }
+
+    // 5. Cấu hình GPIO thực tế
+    Serial.println(">> [Hardware Setup]:");
     pinMode(devices[deviceCount].pin, OUTPUT);
     digitalWrite(devices[deviceCount].pin, LOW);
+    Serial.printf("   - Pin %d set to OUTPUT/LOW\n", devices[deviceCount].pin);
     
     if (devices[deviceCount].type == TYPE_MOTOR) {
         pinMode(devices[deviceCount].pin2, OUTPUT);
         digitalWrite(devices[deviceCount].pin2, LOW);
+        Serial.printf("   - Pin %d (Pin2) set to OUTPUT/LOW\n", devices[deviceCount].pin2);
     }
 
     deviceCount++;
-    saveDevicesToNVS();
+    saveDevicesToNVS(); 
+    
+    Serial.printf(">> [Success] Device Created! Total devices: %d\n", deviceCount);
     sendAck("create", cid, deviceId, true);
   } else {
+    Serial.println(">> [ERROR] Device list full (Max 10)");
     sendAck("create", cid, deviceId, false);
   }
+  
+  Serial.println("--------------------------------------\n");
 }
 
-void handleDelete(String payload) {
+void handleDelete(String jsonString) {
     DynamicJsonDocument doc(1024);
-    deserializeJson(doc, payload);
-    String deviceId = doc["payload"]["deviceId"].as<String>();
-    String cid = doc["payload"]["cid"].as<String>();
+    deserializeJson(doc, jsonString);
+    
+    // Server gửi: { action: 'delete', cid: '...', deviceId: '...' }
+    // Lưu ý: Có thể server gửi "deviceId" hoặc "device": {"id": ...} tùy code delete của bạn
+    // Tôi giả định delete gửi payload đơn giản hơn create
+    
+    String cid = doc["cid"].as<String>();
+    
+    // Cần kiểm tra code deleteDevice ở server gửi key là gì. 
+    // Nếu server gửi: payload = { action, cid, deviceId }
+    String targetId = doc["deviceId"].as<String>(); 
 
     bool found = false;
     for (int i = 0; i < deviceCount; i++) {
-        if (String(devices[i].id) == deviceId) {
-            // Tắt thiết bị trước khi xóa
-            digitalWrite(devices[i].pin, LOW);
-            if (devices[i].type == TYPE_MOTOR) digitalWrite(devices[i].pin2, LOW);
+        if (String(devices[i].id) == targetId) {
+            // Reset pin về an toàn trước khi xóa
+            pinMode(devices[i].pin, INPUT); 
+            if (devices[i].type == TYPE_MOTOR) pinMode(devices[i].pin2, INPUT);
 
-            // Dồn mảng
+            // Xóa khỏi mảng (dồn mảng)
             for (int j = i; j < deviceCount - 1; j++) {
                 devices[j] = devices[j + 1];
             }
             deviceCount--;
             saveDevicesToNVS();
             found = true;
+            Serial.printf(">> Deleted device: %s\n", targetId.c_str());
             break;
         }
     }
-    sendAck("delete", cid, deviceId, found);
+    
+    sendAck("delete", cid, targetId, found);
 }
 
 void handleState(String payload) {
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, payload);
-  String deviceId = doc["payload"]["deviceId"].as<String>();
-  String value = doc["payload"]["value"].as<String>();
+  Serial.println("\n╔════════════════════════════════════╗");
+  Serial.println("║        HANDLE STATE TRIGGERED      ║");
+  Serial.println("╚════════════════════════════════════╝");
 
+  // 1. In gói tin gốc nhận được
+  Serial.print(">> [Raw Payload]: ");
+  Serial.println(payload);
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, payload);
+
+  if (error) {
+    Serial.print(">> [ERROR] JSON Parsing failed: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // 2. Parse dữ liệu (LƯU Ý: Đọc thẳng từ root, không qua ["payload"])
+  // Nếu backend gửi: {"action":"state", "deviceId":"...", "value":"on"}
+  String deviceId = doc["deviceId"].as<String>();
+  String value = doc["value"].as<String>();
+
+  Serial.println(">> [Parsed Data]:");
+  Serial.printf("   - Target ID: %s\n", deviceId.c_str());
+  Serial.printf("   - Command Value: %s\n", value.c_str());
+
+  bool found = false;
+
+  // 3. Duyệt danh sách thiết bị
   for (int i = 0; i < deviceCount; i++) {
+    // Debug nhẹ để xem đang so sánh với thiết bị nào
+    // Serial.printf("   ...Checking against stored ID: %s\n", devices[i].id);
+
     if (String(devices[i].id) == deviceId) {
-      devices[i].state = (value == "on" || value == "1");
+      found = true;
+      Serial.printf(">> [MATCH FOUND] at index %d\n", i);
+
+      // Chuyển đổi value string sang boolean
+      bool newState = (value == "on" || value == "1" || value == "true");
+      devices[i].state = newState;
       
+      Serial.printf("   - New State (Bool): %s\n", newState ? "TRUE (ON)" : "FALSE (OFF)");
+
+      // 4. Thực hiện điều khiển phần cứng và Log Pin
       if (devices[i].type == TYPE_OUTPUT) {
-          digitalWrite(devices[i].pin, devices[i].state ? HIGH : LOW);
+          Serial.printf("   - Action: DigitalWrite\n");
+          Serial.printf("   - Type: OUTPUT/LIGHT/RELAY (0)\n");
+          Serial.printf("   - PIN: %d\n", devices[i].pin);
+          Serial.printf("   - Logic: %s\n", newState ? "HIGH" : "LOW");
+          
+          digitalWrite(devices[i].pin, newState ? HIGH : LOW);
       } 
       else if (devices[i].type == TYPE_MOTOR) {
-          controlMotor(devices[i].pin, devices[i].pin2, devices[i].state);
+          Serial.printf("   - Action: ControlMotor\n");
+          Serial.printf("   - Type: MOTOR/FAN (2)\n");
+          Serial.printf("   - PIN A: %d\n", devices[i].pin);
+          Serial.printf("   - PIN B: %d\n", devices[i].pin2);
+          Serial.printf("   - Logic: %s\n", newState ? "HIGH" : "LOW");
+          
+          controlMotor(devices[i].pin, devices[i].pin2, newState);
+      }
+      else {
+           Serial.printf("   - [WARNING] Unknown device type: %d\n", devices[i].type);
       }
       
       saveDevicesToNVS();
+      Serial.println(">> [Success] State updated & Saved to NVS.");
       break;
     }
   }
+
+  if (!found) {
+    Serial.printf(">> [ERROR] Device ID %s NOT FOUND in local list!\n", deviceId.c_str());
+    Serial.printf("   (Total devices in memory: %d)\n", deviceCount);
+  }
+  Serial.println("--------------------------------------\n");
 }
 
 // ================================================================
@@ -351,9 +470,7 @@ void handleState(String payload) {
 // ================================================================
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  // --- SỬA LỖI Ở ĐÂY ---
-  // Không dùng String message để tránh lỗi bộ nhớ
-  // Parse trực tiếp từ payload
+  // 1. Parse JSON
   DynamicJsonDocument doc(1024);
   DeserializationError error = deserializeJson(doc, payload, length);
 
@@ -363,14 +480,28 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
-  // Lấy action an toàn
-  const char* actionPtr = doc["payload"]["action"];
-  if (!actionPtr) return; // Nếu không có action thì bỏ qua
+  // 2. Lấy Action (Nằm ngay root)
+  const char* actionPtr = doc["action"]; 
+  if (!actionPtr) {
+    Serial.println("Error: No 'action' field in JSON");
+    return;
+  }
   String action = String(actionPtr);
 
-  if (action == "create") handleCreate(String((char*)payload)); // Cần ép kiểu lại để tương thích hàm cũ
-  else if (action == "delete") handleDelete(String((char*)payload));
-  else if (action == "state") handleState(String((char*)payload));
+  Serial.printf(">> MQTT Recv Action: %s\n", action.c_str());
+
+  // 3. Điều hướng
+  // Lưu ý: Truyền thẳng chuỗi JSON gốc vào hàm xử lý để tiết kiệm bước serialize lại
+  // Nhưng vì hàm xử lý của bạn đang nhận String, ta ép kiểu (char*)payload
+  if (action == "create") {
+      handleCreate(String((char*)payload)); 
+  }
+  else if (action == "delete") {
+      handleDelete(String((char*)payload));
+  }
+  else if (action == "state") {
+      handleState(String((char*)payload));
+  }
 }
 
 void sendMqttClaimRequest() {
@@ -396,29 +527,59 @@ void sendAck(String action, String cid, String deviceId, bool success) {
   mqttClient.publish(ackTopic.c_str(), ackMessage.c_str());
 }
 
+// Thay thế hàm connectMQTT cũ bằng hàm này
 void connectMQTT() {
+  // 1. Nếu đã kết nối rồi thì thôi, không làm gì cả
   if (mqttClient.connected()) return;
 
+  // 2. Cấu hình Server
   mqttClient.setServer(mqttHost.c_str(), mqttPort);
   mqttClient.setCallback(mqttCallback);
 
-  Serial.print("Connecting to MQTT...");
+  Serial.print("Attempting MQTT connection to ");
+  Serial.print(mqttHost);
+  Serial.print("...");
+
+  // 3. Thử kết nối
   if (mqttClient.connect(espDeviceId.c_str(), mqttUsername.c_str(), "")) {
-      Serial.println("Connected!");
+      Serial.println("CONNECTED!");
+
+      // --- LOGIC QUAN TRỌNG ĐÃ SỬA ---
       
-      // Xử lý Claim
+      // TRƯỜNG HỢP A: Đang trong quá trình Claim (Lần đầu gặp Home)
       if (claimToken.length() > 0) {
+          Serial.println(">> Mode: CLAIMING (Sending claim request...)");
           sendMqttClaimRequest();
+          
+          // Xóa token và lưu config để lần sau không vào đây nữa
           claimToken = ""; 
-          saveConfigToNVS(); // Lưu lại việc đã claim xong
-      } else {
+          saveConfigToNVS(); 
+          
+          Serial.println(">> Claim sent & Config saved.");
+          Serial.println(">> RESTARTING in 2s to apply Normal Mode...");
+          
+          // QUAN TRỌNG: Chờ tin đi hết rồi Reset để nạp lại từ đầu
+          delay(2000); 
+          ESP.restart(); 
+      } 
+      // TRƯỜNG HỢP B: Chạy bình thường (Đã có Home ID, ESP ID)
+      else {
           String cmdTopic = "iot_nhom15/home/" + homeId + "/esp32/" + espId + "/cmd";
-          mqttClient.subscribe(cmdTopic.c_str());
+          
+          Serial.print(">> Subscribing to Topic: ");
+          Serial.println(cmdTopic);
+          
+          if (mqttClient.subscribe(cmdTopic.c_str())) {
+             Serial.println(">> Subscribe SUCCESS!");
+          } else {
+             Serial.print(">> Subscribe FAILED! Error code=");
+             Serial.println(mqttClient.state());
+          }
       }
   } else {
       Serial.print("Failed rc=");
       Serial.println(mqttClient.state());
-      // KHÔNG ĐƯỢC XÓA EPROM Ở ĐÂY
+      delay(2000); // Chờ chút rồi thử lại ở vòng loop sau
   }
 }
 
@@ -681,6 +842,9 @@ void setup() {
     Serial.println("║   ESP32 BOOTING UP...     ║");
     Serial.println("╚═══════════════════════════╝\n");
     
+
+    mqttClient.setBufferSize(1024);
+
     // Load config từ NVS
     bool hasConfig = loadConfigFromNVS();
     loadDevicesFromNVS();

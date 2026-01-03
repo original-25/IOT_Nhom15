@@ -166,25 +166,34 @@ exports.deleteDevice = async (req, res) => {
 		if (!device) return res.status(404).json({ success: false, message: "Device not found" });
 		if (homeId && device.home.toString() !== homeId) return res.status(403).json({ success: false, message: "Device does not belong to this home" });
 
-		// try to find ESP for publish; keep a reference before removal
+		// Tìm ESP trước khi xóa device để còn gửi lệnh
 		const esp = await EspDevice.findById(device.esp);
 
-		// remove device from DB
-		await device.remove();
+		// Xóa device khỏi DB
+		// Lưu ý: Mongoose mới khuyến nghị dùng deleteOne() thay vì remove()
+		await Device.deleteOne({ _id: id }); 
 
-		// notify ESP that device was deleted
 		let published = true;
 		try {
 			if (!esp) throw new Error("ESP not found");
+
+			// --- [FIX BEGIN] ---
+			// 1. Tạo CID để ESP32 gửi ACK về log
+			const cid = crypto.randomUUID ? crypto.randomUUID() : require('crypto').randomBytes(16).toString('hex');
+			
+			// 2. Gửi payload đúng chuẩn mà ESP32 mong đợi
 			await publishCommand({
 				homeId: device.home.toString(),
 				espId: esp._id.toString(),
 				deviceId: device._id.toString(),
 				payload: {
 					action: "delete",
-					device: { id: device._id.toString() }
+					cid: cid,                       // Thêm CID
+					deviceId: device._id.toString() // Gửi phẳng deviceId ra root
 				}
 			});
+			// --- [FIX END] ---
+
 		} catch (err) {
 			console.warn("publish delete command failed:", err);
 			published = false;
@@ -228,6 +237,7 @@ exports.getDeviceState = async (req, res) => {
 		const device = await Device.findById(id).lean();
 		if (!device) return res.status(404).json({ success: false, message: "Device not found" });
 		if (homeId && device.home.toString() !== homeId) return res.status(403).json({ success: false, message: "Device does not belong to this home" });
+		console.log("đì vai: ", device);
 		return res.json({ success: true, data: { lastState: device.lastState } });
 	} catch (err) {
 		console.error("getDeviceState error:", err);
@@ -261,6 +271,9 @@ exports.getDeviceLogsLatest = async (req, res) => {
 		const device = await Device.findById(id).lean();
 		if (!device) return res.status(404).json({ success: false, message: "Device not found" });
 		if (homeId && device.home.toString() !== homeId) return res.status(403).json({ success: false, message: "Device does not belong to this home" });
+
+		console.log("đì vai: ", device);
+		
 
 		const logs = await DeviceLog.find({ device: id }).sort({ createdAt: -1 }).limit(limit).lean();
 		return res.json({ success: true, data: logs });

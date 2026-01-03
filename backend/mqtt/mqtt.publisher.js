@@ -18,8 +18,22 @@ async function publishCommand({ homeId, espId, deviceId, payload, opts = {} }) {
   // verify esp and device exist
   const esp = await EspDevice.findById(espId).lean();
   if (!esp) throw new Error("ESP not found");
-  const device = await Device.findById(deviceId).lean();
-  if (!device) throw new Error("Device not found");
+  // const device = await Device.findById(deviceId).lean();
+  // if (!device) throw new Error("Device not found");
+
+  if (payload && payload.action === "state") {
+    try {
+      // Lấy giá trị state từ payload (thường là 'value' hoặc 'state' tùy backend gửi)
+      const newState = payload.value !== undefined ? payload.value : "off";
+
+      if (newState !== undefined) {
+        await Device.updateOne({ _id: deviceId }, { lastState: newState });
+        // console.log("Updated lastState for device", deviceId, "to", newState);
+      }
+    } catch (e) {
+      console.warn("Failed to update lastState in DB:", e);
+    }
+  }
 
   // increment provisionAttempts for create action (best-effort)
   if (payload && payload.action === "create") {
@@ -31,7 +45,7 @@ async function publishCommand({ homeId, espId, deviceId, payload, opts = {} }) {
   // create outgoing command log (type: event)
   try {
     await DeviceLog.create({
-      device: device._id,
+      device: deviceId,
       type: "event",
       data: { direction: "out", payload },
       createdAt: new Date()
