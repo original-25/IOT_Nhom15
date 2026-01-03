@@ -118,21 +118,18 @@ public class ESPDetailFragment extends Fragment {
             }
         });
 
-        // Quan sát kết quả Xóa
-        // Giả sử bạn đã có getDeleteResult() trong ViewModel
-        /*
-        espViewModel.getDeleteResult().observe(getViewLifecycleOwner(), response -> {
+        espViewModel.getDeleteEspResult().observe(getViewLifecycleOwner(), response -> {
             if (response != null) {
                 if (response.isSuccess()) {
-                    Toast.makeText(getContext(), "Đã xóa thiết bị", Toast.LENGTH_SHORT).show();
-                    getParentFragmentManager().popBackStack(); // Quay về danh sách
+                    Toast.makeText(getContext(), "Đã xóa bộ điều khiển thành công", Toast.LENGTH_SHORT).show();
+                    // Quay lại màn hình trước hoặc làm mới danh sách
+                    requireActivity().getSupportFragmentManager().popBackStack();
                 } else {
                     Toast.makeText(getContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-                espViewModel.resetDeleteResult();
+                espViewModel.resetDeleteEspResult();
             }
         });
-        */
     }
 
     private void showUpdateDeviceDialog(Esp32Device device) {
@@ -166,8 +163,7 @@ public class ESPDetailFragment extends Fragment {
                 .setTitle("Xác nhận xóa")
                 .setMessage("Bạn có chắc chắn muốn xóa " + device.getName() + " không?")
                 .setPositiveButton("Xóa", (dialog, which) -> {
-                    // GỌI API THỰC TẾ (Bạn cần bổ sung hàm này vào ViewModel/Repo)
-                    // espViewModel.deleteEspDevice(authToken, homeId, device.getId());
+                    espViewModel.deleteEsp32(authToken, homeId, device.getId());
                     Toast.makeText(getContext(), "Tính năng đang cập nhật...", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Hủy", null)

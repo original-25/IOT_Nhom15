@@ -144,10 +144,10 @@ public class ESPViewModel extends ViewModel {
     }
 
     // Hàm cập nhật thiết bị
-    public void updateSubDevice(String token, String homeId, String deviceId, String newName, Map<String, Object> newConfig) {
+    public void updateSubDevice(String token, String homeId, String deviceId, String name, Map<String, Object> config) {
         Map<String, Object> updates = new HashMap<>();
-        if (newName != null) updates.put("name", newName);
-        if (newConfig != null) updates.put("config", newConfig);
+        updates.put("name", name);
+        updates.put("config", config); // Truyền nguyên map config vào
 
         repository.updateSubDevice(token, homeId, deviceId, updates, updateSubDeviceResult);
     }
@@ -155,4 +155,30 @@ public class ESPViewModel extends ViewModel {
     public void resetUpdateSubDeviceResult() {
         updateSubDeviceResult.setValue(null);
     }
+
+    // LiveData cho kết quả xóa ESP32
+    private final MutableLiveData<HomeResponse<Void>> deleteEspResult = new MutableLiveData<>();
+
+    public LiveData<HomeResponse<Void>> getDeleteEspResult() {
+        return deleteEspResult;
+    }
+
+    // Phương thức xóa ESP32
+    public void deleteEsp32(String token, String homeId, String deviceId) {
+        repository.deleteEsp32(token, homeId, deviceId, deleteEspResult);
+    }
+
+    // Hàm reset kết quả để tránh lặp lại hành động khi xoay màn hình
+    public void resetDeleteEspResult() {
+        deleteEspResult.setValue(null);
+    }
+
+    private final MutableLiveData<HomeResponse<List<Map<String, Object>>>> deviceLogsResult = new MutableLiveData<>();
+    public LiveData<HomeResponse<List<Map<String, Object>>>> getDeviceLogsResult() { return deviceLogsResult; }
+
+    public void fetchLatestLogs(String token, String homeId, String deviceId) {
+        repository.getDeviceLogsLatest(token, homeId, deviceId, 1, deviceLogsResult); // Lấy 1 bản ghi mới nhất
+    }
+
+    public void resetDeviceLogsResult() { deviceLogsResult.setValue(null); }
 }

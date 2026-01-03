@@ -25,6 +25,7 @@ import retrofit2.http.Header;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface ApiService {
     // -----------------------------------------------------Đăng nhập-------------------------------------------
@@ -156,16 +157,16 @@ public interface ApiService {
             @Path("id") String deviceId,
             @Body Object request
     );
-//
-//    // 5. Delete a specific ESP32 device (Xóa thiết bị)
-//    @DELETE("api/home/{homeId}/esp32/{id}")
-//    Call<HomeResponse<Void>> deleteEsp32(
-//            @Header("Authorization") String token,
-//            @Path("homeId") String homeId,
-//            @Path("id") String deviceId
-//    );
-//
-//    // 6. Get ESP32 device status (Lấy trạng thái online/offline hiện tại)
+
+    // 5. Delete a specific ESP32 device (Xóa thiết bị)
+    @DELETE("api/home/{homeId}/esp32/{id}")
+    Call<HomeResponse<Void>> deleteEsp32(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 6. Get ESP32 device status (Lấy trạng thái online/offline hiện tại)
     @GET("api/home/{homeId}/esp32/{id}/status")
     Call<HomeResponse<HomeResponse.DeviceStatus>> getEsp32Status(
             @Header("Authorization") String token,
@@ -222,5 +223,14 @@ public interface ApiService {
             @Path("homeId") String homeId,
             @Path("id") String deviceId,
             @Body Map<String, Object> updates
+    );
+
+    // 7. Lấy log gần nhất để hiển thị trên item sensor
+    @GET("api/homes/{homeId}/devices/{id}/logs/latest")
+    Call<HomeResponse<List<Map<String, Object>>>> getDeviceLogsLatest(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Query("limit") int limit
     );
 }

@@ -158,47 +158,7 @@ public class ESPManagerFragment extends Fragment {
             }
         });
     }
-    // Hàm hiển thị Dialog cập nhật tên thiết bị
-    private void showUpdateDeviceDialog(Esp32Device device) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        final EditText input = new EditText(requireContext());
-        input.setText(device.getName()); // Hiện tên cũ
 
-        FrameLayout container = new FrameLayout(requireContext());
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = 60; params.rightMargin = 60;
-        input.setLayoutParams(params);
-        container.addView(input);
-
-        builder.setTitle("Cập nhật thông tin")
-                .setView(container)
-                .setPositiveButton("Cập nhật", (dialog, which) -> {
-                    String newName = input.getText().toString().trim();
-                    if (!newName.isEmpty()) {
-                        // Gọi ViewModel xử lý Update (Bạn cần có hàm này trong ViewModel)
-                        // espViewModel.updateEspDevice(authToken, mHomeId, device.getId(), newName);
-                        Toast.makeText(getContext(), "Đang cập nhật...", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    // Hàm hiển thị Dialog xác nhận xóa thiết bị
-    private void showDeleteConfirmDialog(Esp32Device device) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Xóa thiết bị")
-                .setMessage("Bạn có chắc chắn muốn xóa " + device.getName() + "?\nHành động này không thể hoàn tác.")
-                .setPositiveButton("Xóa", (dialog, which) -> {
-                    // Gọi ViewModel xử lý Delete (Bạn cần có hàm này trong ViewModel)
-                    // espViewModel.deleteEspDevice(authToken, mHomeId, device.getId());
-                    Toast.makeText(getContext(), "Đang xóa thiết bị...", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("Hủy", null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
-    }
     // Luồng xử lý sau khi Server tạo thiết bị thành công
     private void observeProvisionResult() {
         espViewModel.getProvisionResult().observe(getViewLifecycleOwner(), response -> {
