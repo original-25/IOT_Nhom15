@@ -2,6 +2,7 @@ package com.example.smarthome.model.response;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+import java.util.Map;
 
 public class HomeResponse<T> {
     private boolean success;
@@ -47,6 +48,14 @@ public class HomeResponse<T> {
         public String getId() { return id; }
         public String getName() { return name; }
         public String getStatus() { return status; }
+    }
+
+    // Thêm cấu trúc cho Trạng thái thiết bị (khớp với getDeviceState)
+    public static class DeviceState {
+        @SerializedName("lastState")
+        private Map<String, Object> lastState;
+
+        public Map<String, Object> getLastState() { return lastState; }
     }
 
     public static class HomeDetailData {
