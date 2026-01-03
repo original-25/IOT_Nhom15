@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SmartHome</string>
+    <string-array name="device_types">
+        <item>Light</item>
+        <item>Sensor</item>
+        <item>Fan</item>
+    </string-array>
 </resources>

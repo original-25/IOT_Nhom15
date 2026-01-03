@@ -1,5 +1,7 @@
 package com.example.smarthome.network;
 
+import com.example.smarthome.model.request.CreateDeviceRequest;
+import com.example.smarthome.model.response.Device;
 import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.request.HomeRequest;
 import com.example.smarthome.model.request.LoginRequest;
@@ -132,28 +134,28 @@ public interface ApiService {
     );
 
     //2. Get all ESP32 devices of a home (Lấy danh sách thiết bị trong nhà)
-    @GET("api/homes/{homeId}/esp32")
+    @GET("api/home/{homeId}/esp32")
     Call<HomeResponse<List<Esp32Device>>> getAllEsp32InHome(
             @Header("Authorization") String token,
             @Path("homeId") String homeId
     );
-//
-//    // 3. Get details of a specific ESP32 device (Xem chi tiết 1 thiết bị)
-//    @GET("api/home/{homeId}/esp32/{id}")
-//    Call<HomeResponse<Esp32Device>> getEsp32Details(
-//            @Header("Authorization") String token,
-//            @Path("homeId") String homeId,
-//            @Path("id") String deviceId
-//    );
-//
-//    // 4. Update a specific ESP32 device (Cập nhật tên/thông tin thiết bị)
-//    @PATCH("api/home/{homeId}/esp32/{id}")
-//    Call<HomeResponse<Esp32Device>> updateEsp32(
-//            @Header("Authorization") String token,
-//            @Path("homeId") String homeId,
-//            @Path("id") String deviceId,
-//            @Body Object request
-//    );
+
+    // 3. Get details of a specific ESP32 device (Xem chi tiết 1 thiết bị)
+    @GET("api/home/{homeId}/esp32/{id}")
+    Call<HomeResponse<Esp32Device>> getEsp32Details(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 4. Update a specific ESP32 device (Cập nhật tên/thông tin thiết bị)
+    @PATCH("api/home/{homeId}/esp32/{id}")
+    Call<HomeResponse<Esp32Device>> updateEsp32(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Body Object request
+    );
 //
 //    // 5. Delete a specific ESP32 device (Xóa thiết bị)
 //    @DELETE("api/home/{homeId}/esp32/{id}")
@@ -169,5 +171,56 @@ public interface ApiService {
             @Header("Authorization") String token,
             @Path("homeId") String homeId,
             @Path("id") String deviceId
+    );
+
+    //----------------------------------------------Devices-----------------------------------------------
+    // 1.Lấy danh sách device trong esp của home
+    @GET("api/homes/{homeId}/esp32/{espId}/devices")
+    Call<HomeResponse<List<Device>>> getDevicesByEsp(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("espId") String espId
+    );
+
+    // 2.Thêm device
+    @POST("api/homes/{homeId}/devices")
+    Call<HomeResponse<Device>> createDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Body CreateDeviceRequest request
+    );
+
+    // 3. Xóa device
+    @DELETE("api/homes/{homeId}/devices/{id}")
+    Call<HomeResponse<Void>> deleteSubDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 4.Gửi lệnh điều khiển (Bật/Tắt)
+    @POST("api/homes/{homeId}/devices/{id}/command")
+    Call<HomeResponse<Void>> sendCommand(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Body Map<String, Object> payload
+    );
+
+    // 5.Lấy trạng thái mới nhất của thiết bị
+    @GET("api/homes/{homeId}/devices/{id}/state")
+    Call<HomeResponse<HomeResponse.DeviceState>> getDeviceState(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId
+    );
+
+    // 6.Update thiết bị
+    @PATCH("api/homes/{homeId}/devices/{id}")
+    Call<HomeResponse<Device>> updateSubDevice(
+            @Header("Authorization") String token,
+            @Path("homeId") String homeId,
+            @Path("id") String deviceId,
+            @Body Map<String, Object> updates
     );
 }

@@ -40,13 +40,8 @@
  *                 description: Device-specific configuration object
  *                 example:
  *                   pin: 12
- *                   invert: false
- *               settings:
- *                 type: object
- *                 description: Device runtime settings (UI/state preferences)
- *                 example:
- *                   label: "Ceiling Light"
- *                   visible: true
+ *                   pin2: 5
+ *               
  *     responses:
  *       201:
  *         description: Device created
@@ -194,7 +189,7 @@
  *         application/json:
  *           schema:
  *             type: object
- *             example: { "action": "set", "value": 1 }
+ *             example: { "action": "state", "value": 1 }
  *     responses:
  *       200:
  *         description: Command published
