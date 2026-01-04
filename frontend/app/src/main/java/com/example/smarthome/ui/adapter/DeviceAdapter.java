@@ -62,8 +62,11 @@ public class DeviceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     @Override
     public int getItemViewType(int position) {
-        String type = deviceList.get(position).getType().toLowerCase();
-        return type.equals("sensor") ? TYPE_SENSOR : TYPE_CONTROL;
+        String type = deviceList.get(position).getType();
+        if (type != null && type.equalsIgnoreCase("sensor")) {
+            return TYPE_SENSOR;
+        }
+        return TYPE_CONTROL;
     }
 
     @NonNull
