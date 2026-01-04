@@ -8,6 +8,7 @@ import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.request.ProvisionESPRequest;
 import com.example.smarthome.model.response.Esp32ProvisionResponse;
 import com.example.smarthome.model.response.HomeResponse;
+import com.example.smarthome.model.response.Schedule;
 import com.example.smarthome.network.ApiService;
 import com.example.smarthome.network.RetrofitClient;
 import com.google.gson.Gson;
@@ -162,6 +163,58 @@ public class ESPRepository {
         });
     }
 
+    public void createSchedule(String token, String homeId, Map<String, Object> body, MutableLiveData<HomeResponse<Object>> result) {
+        // Thêm tiền tố Bearer cho Token Authorization
+        String authHeader = "Bearer " + token;
+
+        apiService.createSchedule(authHeader, homeId, body).enqueue(new Callback<HomeResponse<Object>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Object>> call, Response<HomeResponse<Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Trả về kết quả thành công từ Backend
+                    result.postValue(response.body());
+                } else {
+                    // Xử lý lỗi từ Server (ví dụ: 401, 403, 500)
+                    HomeResponse<Object> errorResponse = new HomeResponse<>();
+                    errorResponse.setSuccess(false);
+                    errorResponse.setMessage("Lỗi hệ thống: " + response.code());
+                    result.postValue(errorResponse);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Object>> call, Throwable t) {
+                // Xử lý lỗi kết nối mạng
+                HomeResponse<Object> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void getSchedules(String token, String homeId, MutableLiveData<HomeResponse<List<Schedule>>> result) {
+        String authHeader = "Bearer " + token;
+        apiService.getSchedules(authHeader, homeId).enqueue(new Callback<HomeResponse<List<Schedule>>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<List<Schedule>>> call, Response<HomeResponse<List<Schedule>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Trả về danh sách lịch trình đã được populate tên thiết bị
+                    result.postValue(response.body());
+                } else {
+                    handleGenericError(response, result);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<List<Schedule>>> call, Throwable t) {
+                HomeResponse<List<Schedule>> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
     // ESPRepository.java
     public void createDevice(String token, String homeId, CreateDeviceRequest request, MutableLiveData<HomeResponse<Device>> result) {
         // Backend yêu cầu: POST /homes/{homeId}/devices
@@ -225,6 +278,32 @@ public class ESPRepository {
                 HomeResponse<List<Map<String, Object>>> failure = new HomeResponse<>();
                 failure.setSuccess(false);
                 failure.setMessage("Lỗi kết nối logs: " + t.getMessage());
+                result.postValue(failure);
+            }
+        });
+    }
+
+    public void deleteSchedule(String token, String homeId, String scheduleId, MutableLiveData<HomeResponse<Object>> result) {
+        String authHeader = "Bearer " + token;
+        apiService.deleteSchedule(authHeader, homeId, scheduleId).enqueue(new Callback<HomeResponse<Object>>() {
+            @Override
+            public void onResponse(Call<HomeResponse<Object>> call, Response<HomeResponse<Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Backend trả về success: true và message: "Deleted"
+                    result.postValue(response.body());
+                } else {
+                    HomeResponse<Object> error = new HomeResponse<>();
+                    error.setSuccess(false);
+                    error.setMessage("Không thể xóa lịch: " + response.code());
+                    result.postValue(error);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HomeResponse<Object>> call, Throwable t) {
+                HomeResponse<Object> failure = new HomeResponse<>();
+                failure.setSuccess(false);
+                failure.setMessage("Lỗi kết nối: " + t.getMessage());
                 result.postValue(failure);
             }
         });
