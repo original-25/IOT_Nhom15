@@ -13,6 +13,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -43,6 +45,7 @@ public class DeviceManagerFragment extends Fragment {
 
     // Lưu trữ ID đang xử lý để cập nhật đúng item khi nhận Logs hoặc Trạng thái
     private String currentProcessingDeviceId = "";
+    private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefreshLayout;
 
     public static DeviceManagerFragment newInstance(String homeId, String espId) {
         DeviceManagerFragment fragment = new DeviceManagerFragment();
@@ -72,6 +75,17 @@ public class DeviceManagerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Ánh xạ View mới
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+
+        // Thiết lập màu sắc cho vòng xoay loading (tùy chọn)
+        swipeRefreshLayout.setColorSchemeResources(R.color.purple_500, android.R.color.holo_blue_bright);
+
+        // Sự kiện khi người dùng vuốt xuống
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            refreshList(); // Gọi hàm lấy lại danh sách thiết bị
+        });
+
         SharedPreferences prefs = requireContext().getSharedPreferences("AuthPrefs", Context.MODE_PRIVATE);
         authToken = prefs.getString("authToken", "");
 
@@ -88,6 +102,9 @@ public class DeviceManagerFragment extends Fragment {
             @Override
             public void onPowerChange(Device device, boolean isOn) {
                 currentProcessingDeviceId = device.getId();
+                Map<String, Object> tempState = new HashMap<>();
+                tempState.put("value", isOn ? 1 : 0);
+                adapter.updateSingleDeviceState(device.getId(), tempState);
                 espViewModel.controlDevice(authToken, mHomeId, device.getId(), isOn);
             }
 
@@ -98,7 +115,17 @@ public class DeviceManagerFragment extends Fragment {
 
             @Override
             public void onAdvancedSettings(Device device) {
-                Toast.makeText(getContext(), "Cài đặt chân PIN: " + device.getName(), Toast.LENGTH_SHORT).show();
+                // Chuyển sang ScheduleManagerFragment
+                ScheduleManagerFragment scheduleFragment = ScheduleManagerFragment.newInstance(
+                        mHomeId,
+                        device.getId(),
+                        device.getName()
+                );
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, scheduleFragment) // R.id.fragment_container là ID của nơi chứa Fragment trong Activity của bạn
+                        .addToBackStack(null) // Cho phép nhấn nút Back để quay lại danh sách thiết bị
+                        .commit();
             }
 
             @Override
@@ -108,8 +135,12 @@ public class DeviceManagerFragment extends Fragment {
 
             @Override
             public void onShowStatistics(Device device) {
-                // Sẽ mở Activity/Fragment biểu đồ tại đây
-                Toast.makeText(getContext(), "Đang tải lịch sử sensor: " + device.getName(), Toast.LENGTH_SHORT).show();
+                DeviceChartFragment chartFragment = DeviceChartFragment.newInstance(mHomeId, device.getId());
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, chartFragment) // Thay thế bằng ID container của bạn
+                        .addToBackStack(null) // Để nhấn nút Back quay lại được danh sách
+                        .commit();
             }
         });
 
@@ -129,6 +160,10 @@ public class DeviceManagerFragment extends Fragment {
     private void observeViewModel() {
         // Lắng nghe danh sách thiết bị con từ ESP
         espViewModel.getSubDevicesResult().observe(getViewLifecycleOwner(), response -> {
+            // TẮT HIỆU ỨNG XOAY KHI CÓ KẾT QUẢ (Dù thành công hay thất bại)
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
             if (response != null && response.isSuccess()) {
                 List<Device> data = response.getData();
                 if (data != null) {

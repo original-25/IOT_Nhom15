@@ -9,6 +9,7 @@ import com.example.smarthome.model.response.Device;
 import com.example.smarthome.model.response.Esp32Device;
 import com.example.smarthome.model.response.Esp32ProvisionResponse;
 import com.example.smarthome.model.response.HomeResponse;
+import com.example.smarthome.model.response.Schedule;
 import com.example.smarthome.repository.ESPRepository;
 
 import java.util.HashMap;
@@ -119,8 +120,6 @@ public class ESPViewModel extends ViewModel {
 
     public void controlDevice(String token, String homeId, String deviceId, boolean turnOn) {
         Map<String, Object> payload = new HashMap<>();
-
-        // Theo tài liệu Screenshot 153833:
         payload.put("action", "state");
         payload.put("value", turnOn ? 1 : 0);   // Value là 1 nếu bật, 0 nếu tắt
 
@@ -181,4 +180,44 @@ public class ESPViewModel extends ViewModel {
     }
 
     public void resetDeviceLogsResult() { deviceLogsResult.setValue(null); }
+
+    private final MutableLiveData<HomeResponse<Object>> createScheduleResult = new MutableLiveData<>();
+    public LiveData<HomeResponse<Object>> getCreateScheduleResult() { return createScheduleResult; }
+
+    public void createSchedule(String token, String homeId, String deviceId, String name, String time, String action) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", name);
+        body.put("deviceId", deviceId);
+        body.put("time", time);
+        body.put("action", action);
+
+        repository.createSchedule(token, homeId, body, createScheduleResult);
+    }
+
+    private final MutableLiveData<HomeResponse<List<Schedule>>> schedulesResult = new MutableLiveData<>();
+    public LiveData<HomeResponse<List<Schedule>>> getSchedulesResult() { return schedulesResult; }
+
+    public void fetchSchedules(String token, String homeId) {
+        repository.getSchedules(token, homeId, schedulesResult);
+    }
+
+    private final MutableLiveData<HomeResponse<Object>> deleteScheduleResult = new MutableLiveData<>();
+    public LiveData<HomeResponse<Object>> getDeleteScheduleResult() { return deleteScheduleResult; }
+
+    public void deleteSchedule(String token, String homeId, String scheduleId) {
+        repository.deleteSchedule(token, homeId, scheduleId, deleteScheduleResult);
+    }
+
+    public void resetDeleteScheduleResult() {
+        deleteScheduleResult.setValue(null);
+    }
+
+    // Trong ESPViewModel.java
+    private final MutableLiveData<HomeResponse<List<Map<String, Object>>>> chartDataResult = new MutableLiveData<>();
+    public LiveData<HomeResponse<List<Map<String, Object>>>> getChartDataResult() { return chartDataResult; }
+
+    public void fetchChartLogs(String token, String homeId, String deviceId) {
+        // Lấy 20 bản ghi gần nhất để vẽ biểu đồ
+        repository.getDeviceLogsLatest(token, homeId, deviceId, 10, chartDataResult);
+    }
 }
