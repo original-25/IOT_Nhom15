@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:textSize="20sp"
         android:textColor="@color/black"
-        android:hint="Tên lịch (VD: Bật đèn sáng sớm)"
+        android:hint="Tên (VD: Bật đèn sáng sớm)"
         android:inputType="text" />
 
     <TextView
