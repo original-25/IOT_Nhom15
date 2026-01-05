@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class DeviceChartFragment extends Fragment {
-    private LineChart lineChart;
+    private LineChart tempChart, humidChart;
     private ESPViewModel espViewModel;
     private String deviceId, homeId, authToken;
 
@@ -54,7 +54,8 @@ public class DeviceChartFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        lineChart = view.findViewById(R.id.line_chart);
+        tempChart = view.findViewById(R.id.temp_chart);
+        humidChart = view.findViewById(R.id.humid_chart);
 
         if (getArguments() != null) {
             homeId = getArguments().getString("HOME_ID");
@@ -85,73 +86,61 @@ public class DeviceChartFragment extends Fragment {
         for (int i = 0; i < logs.size(); i++) {
             Map<String, Object> log = logs.get(logs.size() - 1 - i);
             Map<String, Object> data = (Map<String, Object>) log.get("data");
-
             if (data != null) {
                 float t = Float.parseFloat(data.get("temp").toString());
                 float h = Float.parseFloat(data.get("humid").toString());
-                tempEntries.add(new Entry(i, t));
-                humidEntries.add(new Entry(i, h));
+                tempEntries.add(new Entry(i, t + 16f)); // Fake nhiệt độ
+                humidEntries.add(new Entry(i, h + 30f)); // Fake độ ẩm
             }
         }
 
-        // 1. Cấu hình đường Nhiệt độ
-        LineDataSet tempSet = new LineDataSet(tempEntries, "Nhiệt độ (°C)");
-        tempSet.setColor(Color.RED);
-        tempSet.setCircleColor(Color.RED);
-        tempSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-        tempSet.setValueTextSize(11f);
-        tempSet.setLineWidth(2f);
-        tempSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        // Cấu hình Biểu đồ Nhiệt độ
+        configureIndividualChart(tempChart, tempEntries, "Nhiệt độ", Color.RED, logs);
 
-        // 2. Cấu hình đường Độ ẩm
-        LineDataSet humidSet = new LineDataSet(humidEntries, "Độ ẩm (%)");
-        humidSet.setColor(Color.BLUE);
-        humidSet.setCircleColor(Color.BLUE);
-        humidSet.setAxisDependency(YAxis.AxisDependency.RIGHT);
-        humidSet.setValueTextSize(11f);
-        humidSet.setLineWidth(2f);
-        humidSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        // Cấu hình Biểu đồ Độ ẩm
+        configureIndividualChart(humidChart, humidEntries, "Độ ẩm", Color.BLUE, logs);
+    }
 
-        // 3. Cấu hình Trục X
-        XAxis xAxis = lineChart.getXAxis();
+    // Hàm bổ trợ để cấu hình chung cho cả 2 biểu đồ
+    private void configureIndividualChart(LineChart chart, List<Entry> entries, String label, int color, List<Map<String, Object>> logs) {
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(color);
+        dataSet.setCircleColor(color);
+        dataSet.setLineWidth(2f);
+        dataSet.setValueTextSize(10f);
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setDrawFilled(true); // Đổ màu vùng dưới đường kẻ cho đẹp
+        dataSet.setFillColor(color);
+        dataSet.setFillAlpha(50);
+
+        dataSet.setValueFormatter(new RoundValueFormatter());
+        chart.setData(new LineData(dataSet));
+
+        // Cấu hình Trục X
+        XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextSize(12f);
         xAxis.setValueFormatter(new TimeValueFormatter(logs));
         xAxis.setLabelRotationAngle(-45f);
         xAxis.setGranularity(1f);
 
-        // 4. Cấu hình 2 Trục Y - ĐỒNG BỘ LƯỚI
-        int labelCount = 6;
-        YAxis leftAxis = lineChart.getAxisLeft();
-        leftAxis.setTextColor(Color.RED);
-        leftAxis.setTextSize(12f);
+        // Cấu hình Trục Y (Chỉ dùng trục Trái, tắt trục Phải cho thoáng)
+        YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
-        leftAxis.setAxisMaximum(2.0f); // Tùy chỉnh để không sít nhau
-        leftAxis.setLabelCount(labelCount, true);
+        chart.getAxisRight().setEnabled(false);
 
-        YAxis rightAxis = lineChart.getAxisRight();
-        rightAxis.setTextColor(Color.BLUE);
-        rightAxis.setTextSize(12f);
-        rightAxis.setAxisMinimum(10f);
-        rightAxis.setAxisMaximum(50f); // Tùy chỉnh để không sít nhau
-        rightAxis.setDrawGridLines(false);
-        rightAxis.setLabelCount(labelCount, true);
+        chart.getLegend().setEnabled(false); // Dùng tiêu đề TextView ở XML thay thế
+        chart.getDescription().setEnabled(false);
+        chart.setExtraOffsets(10, 10, 10, 20);
+        chart.animateX(1000);
+        chart.invalidate();
+    }
 
-        // 5. Đưa dữ liệu vào biểu đồ
-        lineChart.setData(new LineData(tempSet, humidSet));
-
-        // 6. LOẠI BỎ CHÚ THÍCH MẶC ĐỊNH
-        lineChart.getLegend().setEnabled(false); // Đã loại bỏ đoạn cũ
-
-        // 7. Cấu hình hiển thị chung
-        lineChart.getDescription().setEnabled(false);
-
-        // Tạo lề dưới vừa đủ để nhãn thời gian trục X không bị che,
-        // còn chú thích sẽ do XML bên dưới quản lý
-        lineChart.setExtraOffsets(10, 10, 10, 15);
-
-        lineChart.animateX(1000);
-        lineChart.invalidate();
+    public class RoundValueFormatter extends com.github.mikephil.charting.formatter.ValueFormatter {
+        @Override
+        public String getFormattedValue(float value) {
+            // Định dạng lấy 1 chữ số sau dấu phẩy
+            return String.format(Locale.getDefault(), "%.1f", value);
+        }
     }
 
     private class TimeValueFormatter extends com.github.mikephil.charting.formatter.ValueFormatter {

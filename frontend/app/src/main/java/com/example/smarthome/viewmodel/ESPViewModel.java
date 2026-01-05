@@ -218,6 +218,6 @@ public class ESPViewModel extends ViewModel {
 
     public void fetchChartLogs(String token, String homeId, String deviceId) {
         // Lấy 20 bản ghi gần nhất để vẽ biểu đồ
-        repository.getDeviceLogsLatest(token, homeId, deviceId, 10, chartDataResult);
+        repository.getDeviceLogsLatest(token, homeId, deviceId, 12, chartDataResult);
     }
 }

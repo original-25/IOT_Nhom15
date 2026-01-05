@@ -164,7 +164,6 @@ public class ESPDetailFragment extends Fragment {
                 .setMessage("Bạn có chắc chắn muốn xóa " + device.getName() + " không?")
                 .setPositiveButton("Xóa", (dialog, which) -> {
                     espViewModel.deleteEsp32(authToken, homeId, device.getId());
-                    Toast.makeText(getContext(), "Tính năng đang cập nhật...", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
