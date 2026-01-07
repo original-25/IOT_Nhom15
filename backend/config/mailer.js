@@ -6,7 +6,9 @@ console.log("   → Mail User:", mailUser ? `${mailUser.substring(0, 3)}***` : "
 console.log("   → Mail Pass:", mailPass ? "***SET***" : "NOT SET");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // SSL
   auth: {
     user: mailUser,
     pass: mailPass
