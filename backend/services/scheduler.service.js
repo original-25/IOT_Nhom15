@@ -2,7 +2,7 @@
 const cron = require("node-cron");
 const Schedule = require("../models/Schedule");
 const EspDevice = require("../models/EspDevice");
-const Device = require("../model/");
+const Device = require("../models/Device");
 const { publishCommand } = require("../mqtt/mqtt.publisher");
 
 let activeJobs = [];
