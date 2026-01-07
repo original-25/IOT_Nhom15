@@ -15,32 +15,62 @@ module.exports.sendRegisterReq = async (req, res) => {
     console.log('Request Body:', req.body);
     
     const { email } = req.body;
+    console.log("📧 [REGISTER] Step 1: Checking if email exists:", email);
 
     const exists = await User.findOne({ email });
     if (exists) {
+      console.log("❌ [REGISTER] Email already exists");
       return res.status(409).json({ 
         success: false,
         message: "Email already registered",
         errorCode: "EMAIL_EXISTS"
       });
     }
+    console.log("✅ [REGISTER] Step 2: Email available, proceeding...");
 
     await EmailVerification.deleteMany({ email });
+    console.log("🗑️ [REGISTER] Step 3: Cleared old OTP records");
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("🔢 [REGISTER] Step 4: Generated OTP:", otp);
 
     await EmailVerification.create({
       email,
       otp,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000)
     });
+    console.log("💾 [REGISTER] Step 5: OTP saved to database");
 
-    await sendEmail(
-      email,
-      "OTP Verification",
-      `<h2>${otp}</h2><p>OTP expires in 10 minutes.</p>`
-    );
+    console.log("📨 [REGISTER] Step 6: Starting to send email...");
+    console.log("   → To:", email);
+    console.log("   → Subject: OTP Verification");
+    
+    try {
+      await sendEmail(
+        email,
+        "OTP Verification",
+        `<h2>${otp}</h2><p>OTP expires in 10 minutes.</p>`
+      );
+      console.log("✅ [REGISTER] Step 7: Email sent successfully!");
+    } catch (emailError) {
+      console.error("❌ [REGISTER] Failed to send email:");
+      console.error("   → Error name:", emailError.name);
+      console.error("   → Error message:", emailError.message);
+      console.error("   → Full error:", emailError);
+      
+      // Xóa OTP vừa tạo nếu gửi email fail
+      await EmailVerification.deleteMany({ email });
+      console.log("🗑️ [REGISTER] Cleaned up OTP after email failure");
+      
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email. Please check your email configuration.",
+        errorCode: "EMAIL_SEND_FAILED",
+        details: emailError.message
+      });
+    }
 
+    console.log("🎉 [REGISTER] Registration request completed successfully");
     return res.status(200).json({ 
       success: true,
       message: "OTP sent" 
