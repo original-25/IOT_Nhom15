@@ -24,11 +24,18 @@
         android:src="@android:drawable/ic_input_add"
         app:tint="#3F51B5" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_sub_devices"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/tv_manager_title"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_sub_devices"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

@@ -51,8 +51,7 @@
                 android:id="@+id/switch_power"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:visibility="gone" />
+                android:layout_marginEnd="8dp"/>
             <ImageView
                 android:id="@+id/btn_device_options"
                 android:layout_width="48dp"

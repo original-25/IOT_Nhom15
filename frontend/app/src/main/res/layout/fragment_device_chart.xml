@@ -1,0 +1,42 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thống kê Nhiệt độ (°C)"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FF0000"/>
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/temp_chart"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thống kê Độ ẩm (%)"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#0000FF"/>
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/humid_chart"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginTop="10dp" />
+
+    </LinearLayout>
+</ScrollView>

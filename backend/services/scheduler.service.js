@@ -2,6 +2,7 @@
 const cron = require("node-cron");
 const Schedule = require("../models/Schedule");
 const EspDevice = require("../models/EspDevice");
+const Device = require("../model/");
 const { publishCommand } = require("../mqtt/mqtt.publisher");
 
 let activeJobs = [];
@@ -52,6 +53,7 @@ exports.startScheduler = async () => {
               deviceId: item.device._id.toString() 
             }
           });
+          await Device.updateOne({ _id: item.device._id }, { lastState: item.action })
           console.log("   -> Command sent to MQTT successfully.");
         } else {
             console.error("   -> ESP Device not found in DB!");

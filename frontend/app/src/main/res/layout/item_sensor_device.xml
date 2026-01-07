@@ -90,7 +90,7 @@
             android:layout_height="48dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:padding="8dp"
+            android:padding="4dp"
             android:src="@android:drawable/ic_menu_more"
             app:tint="#757575" />
 
