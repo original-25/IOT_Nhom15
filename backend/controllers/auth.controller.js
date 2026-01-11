@@ -1,10 +1,13 @@
 const User = require("../models/User");
 const PasswordResetOtp = require("../models/PasswordResetOTP");
-const sendEmail = require("../utils/sendEmail");
+// const sendEmail = require("../utils/sendEmail");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const EmailVerification = require("../models/EmaiVerification");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+
+const sendEmail = require("../config/mailer");
+
 
 // REGISTER
 // ########################################################
@@ -46,11 +49,13 @@ module.exports.sendRegisterReq = async (req, res) => {
     console.log("   → Subject: OTP Verification");
     
     try {
+      // --- sendRegisterReq ---
       await sendEmail(
         email,
         "OTP Verification",
         `<h2>${otp}</h2><p>OTP expires in 10 minutes.</p>`
       );
+
       console.log("✅ [REGISTER] Step 7: Email sent successfully!");
     } catch (emailError) {
       console.error("❌ [REGISTER] Failed to send email:");
@@ -277,10 +282,13 @@ module.exports.forgotPassword = async (req, res) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
+
+    // --- forgotPassword ---
     await sendEmail(email, "Password reset code", `
       <h2>${otp}</h2>
       <p>This code expires in 10 minutes.</p>
     `);
+
 
     return res.status(200).json({ 
       success: true,
